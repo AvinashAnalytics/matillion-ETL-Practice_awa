@@ -5,7 +5,7 @@ pipeline:
     GW_CUSTOMER_ACCOUNTS:
       type: "table-input"
       parameters:
-        componentName: "GW_CUSTOMER_ACCOUNTS"
+        componentName: "Load Customer Account Data - Reads customer account information from JSON nested data structure"
         database: "[Environment Default]"
         schema: "MAT_PRO"
         targetTable: "GW_CUSTOMER_ACCOUNTS"
@@ -17,7 +17,7 @@ pipeline:
       sources:
       - "GW_CUSTOMER_ACCOUNTS"
       parameters:
-        componentName: "ACC"
+        componentName: "Extract Customer Info - Flattens nested JSON to extract customer_rid and account_name fields"
         includeInputColumns: "No"
         columns:
         - name: "data"
@@ -62,7 +62,7 @@ pipeline:
     GW_ITEMS:
       type: "table-input"
       parameters:
-        componentName: "GW_ITEMS"
+        componentName: "Load Items Data - Retrieves product catalog with pricing and cost information"
         database: "[Environment Default]"
         schema: "MAT_PRO"
         targetTable: "GW_ITEMS"
@@ -77,7 +77,7 @@ pipeline:
     GW_ORDERS:
       type: "table-input"
       parameters:
-        componentName: "GW_ORDERS"
+        componentName: "Load Orders Data - Reads order headers with customer relationships and dates"
         database: "[Environment Default]"
         schema: "MAT_PRO"
         targetTable: "GW_ORDERS"
@@ -91,7 +91,7 @@ pipeline:
     GW_ORDER_ITEMS:
       type: "table-input"
       parameters:
-        componentName: "GW_ORDER_ITEMS"
+        componentName: "Load Order Line Items - Gets detailed order items with quantities per order"
         database: "[Environment Default]"
         schema: "MAT_PRO"
         targetTable: "GW_ORDER_ITEMS"
@@ -108,7 +108,7 @@ pipeline:
       sources:
       - "GW_ORDERS"
       parameters:
-        componentName: "ORDER"
+        componentName: "Type Convert Orders - Converts order fields to proper data types (NUMBER, DATE)"
         conversions:
         - - "CUSTOMER_RID"
           - "NUMBER"
@@ -127,7 +127,7 @@ pipeline:
       sources:
       - "GW_ITEMS"
       parameters:
-        componentName: "ITEM_REF"
+        componentName: "Type Convert Items - Converts item price and cost fields to NUMBER data type"
         conversions:
         - - "RID"
           - "NUMBER"
@@ -146,7 +146,7 @@ pipeline:
       sources:
       - "GW_ORDER_ITEMS"
       parameters:
-        componentName: "ORDER_ITEM"
+        componentName: "Type Convert Order Items - Converts order item IDs and quantities to NUMBER data type"
         conversions:
         - - "ITEM_RID"
           - "NUMBER"
@@ -172,7 +172,7 @@ pipeline:
       - "ITEM_REF"
       - "ORDER_ITEM"
       parameters:
-        componentName: "Integrate"
+        componentName: "Join All Data - Combines orders, items, customers, and order details into single dataset"
         mainTable: "ORDER_ITEM"
         mainTableAlias: "OI"
         joins:
@@ -210,7 +210,7 @@ pipeline:
       sources:
       - "Integrate"
       parameters:
-        componentName: "Calculator"
+        componentName: "Calculate Business Metrics - Computes profit, revenue, and order month for analysis"
         includeInputColumns: "Yes"
         calculations:
         - - "(\"PRICE\"-\"COST\")*\"QUANTITY\""
@@ -224,7 +224,7 @@ pipeline:
       sources:
       - "Calculator"
       parameters:
-        componentName: "Aggregate"
+        componentName: "Summarize by Account & Item - Groups data and sums profit/revenue by customer account, item, and month"
         groupings:
         - "ITEM_NAME"
         - "ACCOUNT_NAME"
@@ -240,12 +240,14 @@ pipeline:
       sources:
       - "Aggregate"
       parameters:
-        componentName: "Rewrite GW_PROFIT_BY_ACCOUNT"
+        componentName: "Write Final Results - Saves aggregated profit and revenue data to target table"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
         schema: "[Environment Default]"
         targetTable: "GW_PROFIT_BY_ACCOUNT"
         orderBy:
+        - - "ORDER_MONTH"
+          - "ASCENDING"
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:

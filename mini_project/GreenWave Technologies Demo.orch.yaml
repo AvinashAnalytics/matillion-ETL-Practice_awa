@@ -44,7 +44,7 @@ pipeline:
         loadOptions:
         autoDebug: "Off"
       postProcessing:
-        updateOutputMessage:
+        updateOutputMessage: "${worksheet_name}"
         updateScalarVariables:
     Table Iterator:
       type: "table-iterator"
@@ -96,8 +96,8 @@ pipeline:
         dataRetentionTimeInDays:
         comment:
       postProcessing:
-        updateOutputMessage:
         updateScalarVariables:
+        updateOutputMessage: ""
     Load Customer 360 Data:
       type: "s3-load"
       transitions:
