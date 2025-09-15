@@ -1,0 +1,95 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "SQL Script"
+      parameters:
+        componentName: "Start"
+    S3 Load:
+      type: "s3-load"
+      parameters:
+        componentName: "S3 Load"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix: "s3://matillion-projects-awa/txn"
+        pattern: ".*"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "TRNX"
+        loadColumns:
+        format: "[Custom]"
+        fileType: "CSV"
+        compression: "AUTO"
+        recordDelimiter:
+        fieldDelimiter:
+        skipHeader: "1"
+        skipBlankLines: "False"
+        dateFormat:
+        timeFormat:
+        timestampFormat:
+        escape:
+        escapeUnenclosedField:
+        trimSpace: "False"
+        fieldOptionallyEnclosed:
+        nullIf:
+        errorOnColumnCountMismatch: "False"
+        emptyFieldAsNull: "True"
+        replaceInvalidCharacters: "False"
+        encodingType:
+        onError: "Abort Statement"
+        sizeLimitB:
+        purgeFiles: "False"
+        truncateColumns: "False"
+        forceLoad: "True"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    SQL Script:
+      type: "sql-executor"
+      transitions:
+        success:
+        - "S3 Load"
+      parameters:
+        componentName: "SQL Script"
+        scriptLocation: "Component"
+        declareSqlVariables: "Include selected"
+        variablesToInclude:
+        - "table_name"
+        sqlScript: "create or replace table MATILLION.stage.${table_name}\r\nusing\
+          \ template (\r\n    select array_agg(object_construct(*))\r\n    from table(\r\
+          \n        infer_schema(\r\n          location=>'@PUBLIC.MATILLION_STAGE/txn/trnx_16.csv',\r\
+          \n          file_format=>'my_csv_fmt'\r\n        )\r\n    )\r\n);\r\n"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+  variables:
+    table_name:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "trnx"
+design:
+  components:
+    Start:
+      position:
+        x: -290
+        "y": -100
+      tempMetlId: 1
+    S3 Load:
+      position:
+        x: 40
+        "y": -110
+      tempMetlId: 2
+    SQL Script:
+      position:
+        x: -140
+        "y": -110
+      tempMetlId: 3

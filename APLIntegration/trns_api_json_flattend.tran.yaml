@@ -1,0 +1,186 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    ip_range:
+      type: "table-input"
+      parameters:
+        componentName: "ip_range"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "ip_range"
+        columnNames:
+        - "createDate"
+        - "ipv6_prefixes"
+        - "prefixes"
+        - "syncToken"
+        timeOffset:
+    ipv6_prefix_flatten:
+      type: "flatten-variant"
+      sources:
+      - "ip_range"
+      parameters:
+        componentName: "ipv6_prefix_flatten"
+        includeInputColumns: "No"
+        columnMapping:
+        - - "createDate"
+          - ""
+          - "VARCHAR"
+          - ""
+        - - "syncToken"
+          - ""
+          - "VARCHAR"
+          - ""
+        - - "p"
+          - "region"
+          - "VARCHAR"
+          - ""
+        - - "p"
+          - "network_border_group"
+          - "VARCHAR"
+          - ""
+        - - "p"
+          - "service"
+          - "VARCHAR"
+          - ""
+        - - "p"
+          - "ipv6_prefix"
+          - "VARCHAR"
+          - ""
+        columnFlattens:
+        - - "ipv6_prefixes"
+          - ""
+          - "p"
+          - "No"
+          - "No"
+          - "Both"
+    Flatten Variant:
+      type: "flatten-variant"
+      sources:
+      - "ip_range"
+      parameters:
+        componentName: "Flatten Variant"
+        includeInputColumns: "Yes"
+        columnMapping:
+        - - "p"
+          - ""
+          - "VARIANT"
+          - "ipv4_jason"
+        columnFlattens:
+        - - "prefixes"
+          - ""
+          - "p"
+          - "No"
+          - "No"
+          - "Both"
+    Extract Nested Data:
+      type: "extract-nested-data-sf"
+      sources:
+      - "Rename"
+      parameters:
+        componentName: "Extract Nested Data"
+        includeInputColumns: "Yes"
+        columns:
+        - name: "network_border_group"
+          datatype: "VARCHAR"
+          size: "0"
+          decimalPlaces: "0"
+          columnName: "ipv4_jason"
+          aliasName: "network_border_group"
+          isArray: "false"
+          include: "true"
+        - name: "ip_prefix"
+          datatype: "VARCHAR"
+          size: "0"
+          decimalPlaces: "0"
+          columnName: "ipv4_jason"
+          aliasName: "ip_prefix"
+          isArray: "false"
+          include: "true"
+        - name: "service"
+          datatype: "VARCHAR"
+          size: "0"
+          decimalPlaces: "0"
+          columnName: "ipv4_jason"
+          aliasName: "service"
+          isArray: "false"
+          include: "true"
+        - name: "region"
+          datatype: "VARCHAR"
+          size: "0"
+          decimalPlaces: "0"
+          columnName: "ipv4_jason"
+          aliasName: "region"
+          isArray: "false"
+          include: "true"
+        outerJoin: "No"
+        inputAlias: "i"
+        arrayPrefix: "f"
+        castingMethod: "Fail on invalid data"
+        caseColumnAliasNames: "No"
+    Rename:
+      type: "rename"
+      sources:
+      - "Flatten Variant"
+      parameters:
+        componentName: "Rename"
+        columnMapping:
+        - - "ipv4_jason"
+          - "ipv4_jason"
+        - - "createDate"
+          - "createDate"
+        - - "syncToken"
+          - "syncToken"
+        includeInputColumns: "No"
+    Rename 2:
+      type: "rename"
+      sources:
+      - "Extract Nested Data"
+      parameters:
+        componentName: "Rename 2"
+        columnMapping:
+        - - "createDate"
+          - "createDate"
+        - - "syncToken"
+          - "syncToken"
+        - - "network_border_group"
+          - "network_border_group"
+        - - "ip_prefix"
+          - "ip_prefix"
+        - - "service"
+          - "service"
+        - - "region"
+          - "region"
+        includeInputColumns: "No"
+design:
+  components:
+    ip_range:
+      position:
+        x: -410
+        "y": -50
+      tempMetlId: 1
+    ipv6_prefix_flatten:
+      position:
+        x: -280
+        "y": -150
+      tempMetlId: 2
+    Flatten Variant:
+      position:
+        x: -250
+        "y": -30
+      tempMetlId: 3
+    Extract Nested Data:
+      position:
+        x: 0
+        "y": -40
+      tempMetlId: 4
+    Rename:
+      position:
+        x: -130
+        "y": -30
+      tempMetlId: 5
+    Rename 2:
+      position:
+        x: 160
+        "y": -40
+      tempMetlId: 6

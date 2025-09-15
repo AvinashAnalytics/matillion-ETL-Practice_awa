@@ -1,0 +1,313 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    GW_CUSTOMER_ACCOUNTS:
+      type: "table-input"
+      parameters:
+        componentName: "GW_CUSTOMER_ACCOUNTS"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_CUSTOMER_ACCOUNTS"
+        columnNames:
+        - "DATA_VALUE"
+        timeOffset:
+    ACC:
+      type: "extract-nested-data-sf"
+      sources:
+      - "GW_CUSTOMER_ACCOUNTS"
+      parameters:
+        componentName: "ACC"
+        includeInputColumns: "No"
+        columns:
+        - name: "data"
+          datatype: "VARIANT"
+          size: "0"
+          decimalPlaces: "0"
+          columnName: "DATA_VALUE"
+          aliasName: "data"
+          isArray: "true"
+          include: "false"
+          childElements:
+          - name: "data-element"
+            datatype: "VARIANT"
+            size: "0"
+            decimalPlaces: "0"
+            columnName: "DATA_VALUE"
+            aliasName: "data-element"
+            isArray: "false"
+            include: "false"
+            childElements:
+            - name: "customer_rid"
+              datatype: "NUMBER"
+              size: "0"
+              decimalPlaces: "0"
+              columnName: "DATA_VALUE"
+              aliasName: "customer_rid"
+              isArray: "false"
+              include: "true"
+            - name: "account_name"
+              datatype: "VARCHAR"
+              size: "0"
+              decimalPlaces: "0"
+              columnName: "DATA_VALUE"
+              aliasName: "account_name"
+              isArray: "false"
+              include: "true"
+        outerJoin: "No"
+        inputAlias: "i"
+        arrayPrefix: "f"
+        castingMethod: "Fail on invalid data"
+        caseColumnAliasNames: "No"
+    GW_ITEMS:
+      type: "table-input"
+      parameters:
+        componentName: "GW_ITEMS"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_ITEMS"
+        columnNames:
+        - "RowId"
+        - "RID"
+        - "NAME"
+        - "PRICE"
+        - "COST"
+        - "LAST_UPDATED"
+        timeOffset:
+    GW_ORDERS:
+      type: "table-input"
+      parameters:
+        componentName: "GW_ORDERS"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_ORDERS"
+        columnNames:
+        - "RowId"
+        - "RID"
+        - "CUSTOMER_RID"
+        - "ORDER_DATE"
+        - "LAST_UPDATED"
+        timeOffset:
+    GW_ORDER_ITEMS:
+      type: "table-input"
+      parameters:
+        componentName: "GW_ORDER_ITEMS"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_ORDER_ITEMS"
+        columnNames:
+        - "RowId"
+        - "RID"
+        - "ORDER_RID"
+        - "ITEM_RID"
+        - "QUANTITY"
+        - "LAST_UPDATED"
+        timeOffset:
+    ORDER:
+      type: "convert-type"
+      sources:
+      - "GW_ORDERS"
+      parameters:
+        componentName: "ORDER"
+        conversions:
+        - - "CUSTOMER_RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "ORDER_DATE"
+          - "DATE"
+          - ""
+          - ""
+    ITEM_REF:
+      type: "convert-type"
+      sources:
+      - "GW_ITEMS"
+      parameters:
+        componentName: "ITEM_REF"
+        conversions:
+        - - "RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "COST"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "PRICE"
+          - "NUMBER"
+          - ""
+          - ""
+    ORDER_ITEM:
+      type: "convert-type"
+      sources:
+      - "GW_ORDER_ITEMS"
+      parameters:
+        componentName: "ORDER_ITEM"
+        conversions:
+        - - "ITEM_RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "ORDER_RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "RID"
+          - "NUMBER"
+          - ""
+          - ""
+        - - "QUANTITY"
+          - "NUMBER"
+          - ""
+          - ""
+    Integrate:
+      type: "join"
+      sources:
+      - "ACC"
+      - "ORDER"
+      - "ITEM_REF"
+      - "ORDER_ITEM"
+      parameters:
+        componentName: "Integrate"
+        mainTable: "ORDER_ITEM"
+        mainTableAlias: "OI"
+        joins:
+        - - "ORDER"
+          - "O"
+          - "Inner"
+        - - "ITEM_REF"
+          - "I"
+          - "Inner"
+        - - "ACC"
+          - "A"
+          - "Inner"
+        joinExpressions:
+        - - "\"OI\".\"ORDER_RID\"=\"O\".\"RID\""
+          - "OI_Inner_O"
+        - - "\"OI\".\"ITEM_RID\"=\"I\".\"RID\""
+          - "OI_Inner_I"
+        - - "\"O\".\"CUSTOMER_RID\"=\"A\".\"customer_rid\""
+          - "OI_Inner_A"
+        columnMappings:
+        - - "O.ORDER_DATE"
+          - "ORDER_DATE"
+        - - "OI.QUANTITY"
+          - "QUANTITY"
+        - - "I.NAME"
+          - "ITEM_NAME"
+        - - "I.COST"
+          - "COST"
+        - - "I.PRICE"
+          - "PRICE"
+        - - "A.account_name"
+          - "ACCOUNT_NAME"
+    Calculator:
+      type: "calculator"
+      sources:
+      - "Integrate"
+      parameters:
+        componentName: "Calculator"
+        includeInputColumns: "Yes"
+        calculations:
+        - - "(\"PRICE\"-\"COST\")*\"QUANTITY\""
+          - "PROFIT"
+        - - "(\"PRICE\" * \"QUANTITY\")"
+          - "REVENUE"
+        - - "TRUNCATE(\"ORDER_DATE\", 'mm')"
+          - "ORDER_MONTH"
+    Aggregate:
+      type: "aggregate"
+      sources:
+      - "Calculator"
+      parameters:
+        componentName: "Aggregate"
+        groupings:
+        - "ITEM_NAME"
+        - "ACCOUNT_NAME"
+        - "ORDER_MONTH"
+        aggregations:
+        - - "PROFIT"
+          - "Sum"
+        - - "REVENUE"
+          - "Sum"
+        groupingType: "Group By"
+    Rewrite GW_PROFIT_BY_ACCOUNT:
+      type: "rewrite-table"
+      sources:
+      - "Aggregate"
+      parameters:
+        componentName: "Rewrite GW_PROFIT_BY_ACCOUNT"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "GW_PROFIT_BY_ACCOUNT"
+        orderBy:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+design:
+  components:
+    GW_CUSTOMER_ACCOUNTS:
+      position:
+        x: -360
+        "y": -60
+      tempMetlId: 1
+    ACC:
+      position:
+        x: -170
+        "y": -60
+      tempMetlId: 2
+    GW_ITEMS:
+      position:
+        x: -360
+        "y": 160
+      tempMetlId: 3
+    GW_ORDERS:
+      position:
+        x: -360
+        "y": 60
+      tempMetlId: 4
+    GW_ORDER_ITEMS:
+      position:
+        x: -360
+        "y": 260
+      tempMetlId: 5
+    ORDER:
+      position:
+        x: -160
+        "y": 60
+      tempMetlId: 6
+    ITEM_REF:
+      position:
+        x: -160
+        "y": 160
+      tempMetlId: 7
+    ORDER_ITEM:
+      position:
+        x: -160
+        "y": 260
+      tempMetlId: 8
+    Integrate:
+      position:
+        x: 130
+        "y": 120
+      tempMetlId: 9
+    Calculator:
+      position:
+        x: 290
+        "y": 120
+      tempMetlId: 10
+    Aggregate:
+      position:
+        x: 450
+        "y": 120
+      tempMetlId: 11
+    Rewrite GW_PROFIT_BY_ACCOUNT:
+      position:
+        x: 610
+        "y": 120
+      tempMetlId: 12

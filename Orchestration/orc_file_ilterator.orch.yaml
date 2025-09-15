@@ -1,0 +1,131 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "File Iterator"
+      parameters:
+        componentName: "Start"
+    S3 Load:
+      type: "s3-load"
+      parameters:
+        componentName: "S3 Load"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix: "s3://matillion-projects-awa/"
+        pattern: "${file_dir}/${file_name}"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "TRNX"
+        loadColumns:
+        - "trans_id"
+        - "account_id"
+        - "Date"
+        - "Type"
+        - "operation"
+        - "amount"
+        - "balance"
+        - "Purpose"
+        - "bank"
+        - "account_partern_id"
+        format: "[Custom]"
+        fileType: "CSV"
+        compression: "AUTO"
+        recordDelimiter:
+        fieldDelimiter: ","
+        skipHeader: "1"
+        skipBlankLines: "False"
+        dateFormat:
+        timeFormat:
+        timestampFormat:
+        escape:
+        escapeUnenclosedField:
+        trimSpace: "False"
+        fieldOptionallyEnclosed:
+        nullIf:
+        errorOnColumnCountMismatch: "False"
+        emptyFieldAsNull: "True"
+        replaceInvalidCharacters: "False"
+        encodingType:
+        onError: "Abort Statement"
+        sizeLimitB:
+        purgeFiles: "False"
+        truncateColumns: "False"
+        forceLoad: "True"
+      postProcessing:
+        updateOutputMessage: "${file_name}"
+        updateScalarVariables:
+    File Iterator:
+      type: "file-iterator"
+      iterationTarget: "S3 Load"
+      parameters:
+        componentName: "File Iterator"
+        inputDataType: "S3"
+        inputDataUrl1: "s3://matillion-projects-awa"
+        maxIterations: "5"
+        filterRegex: "${file_dir}/${file_name}.*_NEW.*"
+        concurrency: "Concurrent"
+        variables:
+        - - "sysvar"
+          - "Filename"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+  variables:
+    filter_regex:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "${file_dir}/${file_name}_1[67].*"
+    file_name:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "trnx"
+    file_dir:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "txn"
+    file:
+      metadata:
+        type: "GRID"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+        columns:
+          filename:
+            columnType: "TEXT"
+          dir:
+            columnType: "TEXT"
+      defaultValue:
+      - - "trnx"
+        - "txn"
+design:
+  components:
+    Start:
+      position:
+        x: -210
+        "y": 0
+      tempMetlId: 1
+    S3 Load:
+      position:
+        x: -50
+        "y": -20
+      tempMetlId: 2
+    File Iterator:
+      position:
+        x: -50
+        "y": -20
+      tempMetlId: 3

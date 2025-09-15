@@ -1,0 +1,95 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "Fixed Iterator"
+      parameters:
+        componentName: "Start"
+    S3 Load:
+      type: "s3-load"
+      parameters:
+        componentName: "S3 Load"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix: "s3://matillion-projects-awa/txn"
+        pattern: "/${file_name}"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "TRNX"
+        loadColumns:
+        format: "[Custom]"
+        fileType: "CSV"
+        compression: "AUTO"
+        recordDelimiter:
+        fieldDelimiter:
+        skipHeader: "1"
+        skipBlankLines: "False"
+        dateFormat:
+        timeFormat:
+        timestampFormat:
+        escape:
+        escapeUnenclosedField:
+        trimSpace: "False"
+        fieldOptionallyEnclosed:
+        nullIf:
+        errorOnColumnCountMismatch: "False"
+        emptyFieldAsNull: "True"
+        replaceInvalidCharacters: "False"
+        encodingType:
+        onError: "Abort Statement"
+        sizeLimitB:
+        purgeFiles: "False"
+        truncateColumns: "False"
+        forceLoad: "False"
+      postProcessing:
+        updateOutputMessage: "⚡File Loaded: ${file_name}\r\n"
+        updateScalarVariables:
+    Fixed Iterator:
+      type: "fixed-iterator"
+      iterationTarget: "S3 Load"
+      parameters:
+        componentName: "Fixed Iterator"
+        concurrency: "Sequential"
+        variablesToIterate:
+        - "file_name"
+        iterationValues:
+        - - "trnx_16.csv"
+        - - "trnx_17.csv"
+        breakOnFailure: "No"
+      postProcessing:
+        updateOutputMessage: "🚀 AWA Team Deployment\r\n📦 Project: ${sysvar.project.id}\r\
+          \n🌍 Env: ${sysvar.environment.name}\r\n🔑 Run ID: ${sysvar.rootPipeline.executionId}\r\
+          \n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n😂 Fixed Iterator boss\
+          \ fight → AWA Team WIN!\r\n\r\n"
+        updateScalarVariables:
+  variables:
+    file_name:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "trnx"
+design:
+  components:
+    Start:
+      position:
+        x: -40
+        "y": 0
+      tempMetlId: 1
+    S3 Load:
+      position:
+        x: 160
+        "y": 0
+      tempMetlId: 2
+    Fixed Iterator:
+      position:
+        x: 160
+        "y": -20
+      tempMetlId: 3

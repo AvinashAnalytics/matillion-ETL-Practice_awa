@@ -1,0 +1,43 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    Generate Worksheet Name:
+      type: "fixed-flow"
+      parameters:
+        componentName: "Generate Worksheet Name"
+        columns:
+        - - "WORKSHEET_NAME"
+          - "VARCHAR"
+          - ""
+          - ""
+        values:
+        - - "ITEMS"
+        - - "ORDERS"
+        - - "ORDER_ITEMS"
+    CREATE SHEET_NAMES:
+      type: "rewrite-table"
+      sources:
+      - "Generate Worksheet Name"
+      parameters:
+        componentName: "CREATE SHEET_NAMES"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_SHEET_NAMES"
+        orderBy:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+design:
+  components:
+    Generate Worksheet Name:
+      position:
+        x: -320
+        "y": -90
+      tempMetlId: 1
+    CREATE SHEET_NAMES:
+      position:
+        x: -160
+        "y": -90
+      tempMetlId: 2

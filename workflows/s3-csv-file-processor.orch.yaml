@@ -1,0 +1,50 @@
+type: "orchestration"
+version:
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "Load CSV to Snowflake"
+      parameters:
+        componentName: "Start"
+    Load CSV to Snowflake:
+      type: "s3-load"
+      parameters:
+        componentName: "Load CSV to Snowflake"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix: "s3://matillion-projects-awa/txn"
+        pattern: ".*.csv"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "trnx"
+        format: "[Custom]"
+        fileType: "CSV"
+        compression: "AUTO"
+        skipHeader: "1"
+        skipBlankLines: "False"
+        emptyFieldAsNull: "True"
+        errorOnColumnCountMismatch: "False"
+        trimSpace: "False"
+        replaceInvalidCharacters: "False"
+        onError: "Abort Statement"
+        purgeFiles: "False"
+        matchByColumnName: "None"
+        truncateColumns: "False"
+        forceLoad: "False"
+design:
+  components:
+    Load CSV to Snowflake:
+      position:
+        x: 160
+        "y": 0
+      tempMetlId:
+    Start:
+      position:
+        x: 0
+        "y": 0
+      tempMetlId:

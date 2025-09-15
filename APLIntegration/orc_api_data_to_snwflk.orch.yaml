@@ -1,0 +1,55 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "aws-ip-ranges"
+      parameters:
+        componentName: "Start"
+    aws-ip-ranges:
+      type: "modular-api-extract-input-v2"
+      parameters:
+        componentName: "aws-ip-ranges"
+        componentId: "custom_v2-136cfc4c-d738-4efc-b5c5-ba22a90436e6"
+        inputId: "api-extract-input-v2"
+        api-extract-input-v2:
+          profile: "custom-136cfc4c-d738-4efc-b5c5-ba22a90436e6"
+          endpoint: "ip ranges"
+          connectionRef:
+            overrides:
+              authType: "NONE"
+          uriParams:
+          queryParams:
+          headerParams:
+          postBody:
+          pageLimit:
+          logLevel: "ERROR"
+          loadSelectedData: "No"
+        outputId: "snowflake-output-connector-v0"
+        snowflake-output-connector-v0:
+          warehouse: "[Environment Default]"
+          database: "[Environment Default]"
+          schema: "[Environment Default]"
+          tableName: "ip_range"
+          createTableMode: "FAIL_IF_EXISTS"
+          cleanStagedFiles: "Yes"
+          stagePlatform: "SNOWFLAKE"
+          snowflake#internalStageType: "USER"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+design:
+  components:
+    Start:
+      position:
+        x: -530
+        "y": -90
+      tempMetlId: 1
+    aws-ip-ranges:
+      position:
+        x: -360
+        "y": -90
+      tempMetlId: 2

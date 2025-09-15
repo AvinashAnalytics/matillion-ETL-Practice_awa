@@ -1,0 +1,206 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "Run Create SHEET_NAMES"
+        - "Replace GW_CUSTOMER_ACCOUNTS"
+      parameters:
+        componentName: "Start"
+    Run Create SHEET_NAMES:
+      type: "run-transformation"
+      transitions:
+        success:
+        - "Table Iterator"
+      parameters:
+        componentName: "Run Create SHEET_NAMES"
+        transformationJob: "mini_project/trns_project.tran.yaml"
+        setScalarVariables:
+        setGridVariables:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Excel Query:
+      type: "excel-query"
+      parameters:
+        componentName: "Excel Query"
+        basicAdvancedMode: "Advanced"
+        storageType: "Amazon S3 Storage"
+        storageUrl: "s3://devrel.matillion.com/solutions/GreenWave/store_lite.xlsx"
+        containsHeaderRow: "Yes"
+        connectionOptions:
+        sqlQuery: "SELECT * FROM ${worksheet_name}"
+        type: "Standard"
+        primaryKeys:
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_${worksheet_name}"
+        stage: "[Custom]"
+        stagePlatform: "Snowflake Managed"
+        loadOptions:
+        autoDebug: "Off"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Table Iterator:
+      type: "table-iterator"
+      transitions:
+        success:
+        - "Wait for loads"
+      iterationTarget: "Excel Query"
+      parameters:
+        componentName: "Table Iterator"
+        mode: "Basic"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_SHEET_NAMES"
+        concurrency: "Sequential"
+        columnMapping:
+        - - "WORKSHEET_NAME"
+          - "worksheet_name"
+        orderBy:
+        sort: "Ascending"
+        breakOnFailure: "No"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Replace GW_CUSTOMER_ACCOUNTS:
+      type: "create-table-v2"
+      transitions:
+        success:
+        - "Load Customer 360 Data"
+      parameters:
+        componentName: "Replace GW_CUSTOMER_ACCOUNTS"
+        createMethod: "Replace"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        table: "GW_CUSTOMER_ACCOUNTS"
+        snowflakeTableType: "Permanent"
+        columns:
+        - - "DATA_VALUE"
+          - "VARIANT"
+          - ""
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - ""
+          - ""
+        defaultDdlCollation:
+        primaryKeys:
+        clusteringKeys:
+        dataRetentionTimeInDays:
+        comment:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Load Customer 360 Data:
+      type: "s3-load"
+      transitions:
+        success:
+        - "Wait for loads"
+      parameters:
+        componentName: "Load Customer 360 Data"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix: "s3://devrel.matillion.com "
+        pattern: "solutions/GreenWave/customer_accounts.json"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "MAT_PRO"
+        targetTable: "GW_CUSTOMER_ACCOUNTS"
+        loadColumns:
+        format: "[Custom]"
+        fileType: "JSON"
+        compression: "AUTO"
+        enableOctal: "False"
+        allowDuplicates: "False"
+        stripOuterArray: "False"
+        stripNullValues: "False"
+        ignoreUtf8Errors: "False"
+        nullIf1:
+        trimSpace1: "False"
+        onError: "Abort Statement"
+        sizeLimitB:
+        purgeFiles: "False"
+        matchByColumnName: "None"
+        truncateColumns: "False"
+        forceLoad: "False"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Wait for loads:
+      type: "and"
+      transitions:
+        unconditional:
+        - "Run Calculate Profit and Revenue"
+      parameters:
+        componentName: "Wait for loads"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Run Calculate Profit and Revenue:
+      type: "run-transformation"
+      parameters:
+        componentName: "Run Calculate Profit and Revenue"
+        transformationJob: "mini_project/Calculate Profit and Revenue.tran.yaml"
+        setScalarVariables:
+        setGridVariables:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+  variables:
+    worksheet_name:
+      metadata:
+        type: "TEXT"
+        description: ""
+        scope: "COPIED"
+        visibility: "PRIVATE"
+      defaultValue: "ITEMS"
+design:
+  components:
+    Start:
+      position:
+        x: -450
+        "y": -100
+      tempMetlId: 1
+    Run Create SHEET_NAMES:
+      position:
+        x: -290
+        "y": 0
+      tempMetlId: 2
+    Excel Query:
+      position:
+        x: -90
+        "y": -20
+      tempMetlId: 3
+    Table Iterator:
+      position:
+        x: -90
+        "y": -20
+      tempMetlId: 4
+    Replace GW_CUSTOMER_ACCOUNTS:
+      position:
+        x: -290
+        "y": -180
+      tempMetlId: 5
+    Load Customer 360 Data:
+      position:
+        x: -90
+        "y": -180
+      tempMetlId: 6
+    Wait for loads:
+      position:
+        x: 130
+        "y": -90
+      tempMetlId: 7
+    Run Calculate Profit and Revenue:
+      position:
+        x: 290
+        "y": -90
+      tempMetlId: 8

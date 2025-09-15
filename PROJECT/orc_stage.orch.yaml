@@ -1,0 +1,82 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+        - "S3 Load 2"
+        - "Create S3 Stage"
+      parameters:
+        componentName: "Start"
+    S3 Load 2:
+      type: "s3-load"
+      parameters:
+        componentName: "S3 Load 2"
+        stage: "[Custom]"
+        authentication: "Credentials"
+        s3ObjectPrefix:
+        pattern: ".*"
+        encryption: "None"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable:
+        loadColumns:
+        format: "[Custom]"
+        fileType: "CSV"
+        compression: "AUTO"
+        recordDelimiter:
+        fieldDelimiter:
+        skipHeader:
+        skipBlankLines: "False"
+        dateFormat:
+        timeFormat:
+        timestampFormat:
+        escape:
+        escapeUnenclosedField:
+        trimSpace: "False"
+        fieldOptionallyEnclosed:
+        nullIf:
+        errorOnColumnCountMismatch: "False"
+        emptyFieldAsNull: "True"
+        replaceInvalidCharacters: "False"
+        encodingType:
+        onError: "Abort Statement"
+        sizeLimitB:
+        purgeFiles: "False"
+        truncateColumns: "False"
+        forceLoad: "False"
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Create S3 Stage:
+      type: "sql-executor"
+      parameters:
+        componentName: "Create S3 Stage"
+        scriptLocation: "Component"
+        declareSqlVariables: "Include selected"
+        sqlScript: |-
+          -- Create external stage for S3 data loading if it doesn't already exist
+          CREATE STAGE IF NOT EXISTS S3_DATA_STAGE
+          URL = 's3://[BUCKET_NAME]/[PATH]/'
+          CREDENTIALS = (AWS_KEY_ID = '[AWS_ACCESS_KEY_ID]' AWS_SECRET_KEY = '[AWS_SECRET_KEY]')
+          FILE_FORMAT = (TYPE = CSV FIELD_DELIMITER = ',' SKIP_HEADER = 1);
+design:
+  components:
+    Start:
+      position:
+        x: -320
+        "y": -10
+      tempMetlId: 1
+    S3 Load 2:
+      position:
+        x: 10
+        "y": 0
+      tempMetlId: 2
+    Create S3 Stage:
+      position:
+        x: -160
+        "y": 90
+      tempMetlId: 3
