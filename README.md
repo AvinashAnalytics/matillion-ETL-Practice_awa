@@ -19,6 +19,11 @@ This repository contains a collection of **Matillion Data Productivity Cloud** p
 │   ├── orc_file_ilterator.orch.yaml        # File processing iteration
 │   ├── orc_fix_Iterator.orch.yaml          # Fixed dataset iteration
 │   └── orc_s3_to_snowflake.orch.yaml       # S3 to Snowflake data loading
+├── mini_project/            # Complete business analytics demo
+│   ├── GreenWave Technologies Demo.orch.yaml    # Main orchestration pipeline
+│   ├── Calculate Profit and Revenue.tran.yaml   # Business metrics transformation
+│   ├── trns_project.tran.yaml                   # Worksheet names setup
+│   └── README.md                                # Mini project documentation
 ├── workflows/               # Reusable workflow templates
 │   └── s3-csv-file-processor.orch.yaml     # CSV file processing workflow
 └── README.md               # Project documentation
@@ -26,7 +31,17 @@ This repository contains a collection of **Matillion Data Productivity Cloud** p
 
 ## 🚀 Key Learning Areas
 
-### 1. **API Integration & JSON Processing**
+### 1. **Complete Business Analytics Demo**
+- **Pipeline**: [`mini_project/`](./mini_project/README.md) - GreenWave Technologies Demo
+- **Skills Demonstrated**:
+  - End-to-end ELT workflow from Excel files and JSON data
+  - Complex data joins across multiple data sources
+  - Business metrics calculation (profit, revenue)
+  - Iterator patterns for dynamic Excel worksheet processing
+  - Nested JSON data extraction and flattening
+  - Data aggregation and summarization
+
+### 2. **API Integration & JSON Processing**
 - **Pipeline**: `APLIntegration/trns_api_json_flattend.tran.yaml`
 - **Skills Demonstrated**:
   - JSON data flattening using `flatten-variant` components
