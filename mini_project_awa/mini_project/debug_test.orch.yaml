@@ -1,9 +1,0 @@
-type: "orchestration"
-version: "1.0"
-pipeline:
-  components:
-    Start:
-      type: "start"
-      parameters:
-        componentName: "Start"
-design: {}

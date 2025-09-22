@@ -33,8 +33,8 @@ design:
   components:
     Generate Worksheet Name:
       position:
-        x: -530
-        "y": -170
+        x: -510
+        "y": -190
       tempMetlId: 1
     CREATE SHEET_NAMES:
       position:
