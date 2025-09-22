@@ -69,21 +69,19 @@ pipeline:
         schema: "[Environment Default]"
         targetTable: "stg_batteryelectric_make"
         orderBy:
-  variables:
-    jv_col_list:
-      metadata:
-        type: "TEXT"
-        description: "Column list, comma separated, enclosed in single quotes"
-        scope: "COPIED"
-        visibility: "PUBLIC"
-      defaultValue: ""
-    jv_pivot_aliases:
-      metadata:
-        type: "TEXT"
-        description: "Pivot column alias names, comma separated, no quotes"
-        scope: "COPIED"
-        visibility: "PUBLIC"
-      defaultValue: ""
+variables:
+  jv_col_list:
+    type: "TEXT"
+    description: "Column list, comma separated, enclosed in single quotes"
+    scope: "COPIED"
+    visibility: "PUBLIC"
+    defaultValue: ""
+  jv_pivot_aliases:
+    type: "TEXT"
+    description: "Pivot column alias names, comma separated, no quotes"
+    scope: "COPIED"
+    visibility: "PUBLIC"
+    defaultValue: ""
 design:
   components:
     stg_batteryelectric_narrow:

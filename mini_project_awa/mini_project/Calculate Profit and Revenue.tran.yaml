@@ -7,7 +7,7 @@ pipeline:
       parameters:
         componentName: "Load Customer Account Data - Reads customer account information from JSON nested data structure"
         database: "[Environment Default]"
-        schema: "MAT_PRO"
+        schema: "[Environment Default]"
         targetTable: "GW_CUSTOMER_ACCOUNTS"
         columnNames:
         - "DATA_VALUE"
@@ -64,7 +64,7 @@ pipeline:
       parameters:
         componentName: "Load Items Data - Retrieves product catalog with pricing and cost information"
         database: "[Environment Default]"
-        schema: "MAT_PRO"
+        schema: "[Environment Default]"
         targetTable: "GW_ITEMS"
         columnNames:
         - "RowId"
@@ -79,7 +79,7 @@ pipeline:
       parameters:
         componentName: "Load Orders Data - Reads order headers with customer relationships and dates"
         database: "[Environment Default]"
-        schema: "MAT_PRO"
+        schema: "[Environment Default]"
         targetTable: "GW_ORDERS"
         columnNames:
         - "RowId"
@@ -93,7 +93,7 @@ pipeline:
       parameters:
         componentName: "Load Order Line Items - Gets detailed order items with quantities per order"
         database: "[Environment Default]"
-        schema: "MAT_PRO"
+        schema: "[Environment Default]"
         targetTable: "GW_ORDER_ITEMS"
         columnNames:
         - "RowId"

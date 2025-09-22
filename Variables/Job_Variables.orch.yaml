@@ -1,0 +1,178 @@
+type: "orchestration"
+version: "1.0"
+pipeline:
+  components:
+    Start:
+      type: "start"
+      transitions:
+        unconditional:
+          - "Update Variable Branch 1"
+          - "Update Variable Branch 2"
+      parameters:
+        componentName: "Start"
+    Update Variable Branch 1:
+      type: "update-scalar"
+      transitions:
+        success:
+          - "Create Table Branch 1"
+      parameters:
+        componentName: "Update Variable Branch 1"
+        scalarsToUpdate:
+          - - "jv_val_1"
+            - "Branch_shared1"
+          - - "jv_val_2" 
+            - "Branch_copied1"
+    Update Variable Branch 2:
+      type: "update-scalar"
+      transitions:
+        success:
+          - "Create Table Branch 2"
+      parameters:
+        componentName: "Update Variable Branch 2"
+        scalarsToUpdate:
+          - - "jv_val_1"
+            - "Branch_shared2"
+          - - "jv_val_2"
+            - "Branch_copied2"
+    Create Table Branch 1:
+      type: "create-table"
+      transitions:
+        success:
+          - "Synchronize Branches"
+      parameters:
+        componentName: "Create Table Branch 1"
+        createReplace: "Replace"
+        database: "[Environment Default]"
+        schema: "[Environment Default]" 
+        newTableName: "TEST_BRANCH1"
+        tableType: "Permanent"
+        columns:
+          - - "${jv_val_1}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+          - - "${jv_val_2}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+    Create Table Branch 2:
+      type: "create-table"
+      transitions:
+        success:
+          - "Synchronize Branches"
+      parameters:
+        componentName: "Create Table Branch 2"
+        createReplace: "Replace"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        newTableName: "TEST_BRANCH2"
+        tableType: "Permanent"
+        columns:
+          - - "${jv_val_1}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+          - - "${jv_val_2}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+    Synchronize Branches:
+      type: "and"
+      transitions:
+        unconditional:
+          - "Create Final Table"
+      parameters:
+        componentName: "Synchronize Branches"
+    Create Final Table:
+      type: "create-table"
+      parameters:
+        componentName: "Create Final Table"
+        createReplace: "Replace"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        newTableName: "TEST_FINAL"
+        tableType: "Permanent"
+        columns:
+          - - "${jv_val_1}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+          - - "${jv_val_2}"
+            - "VARCHAR"
+            - "100"
+            - ""
+            - ""
+            - "No"
+            - "No"
+            - ""
+            - ""
+  variables:
+    jv_val_1:
+      metadata:
+        type: "TEXT"
+        description: "Shared variable that maintains same value across parallel branches"
+        scope: "SHARED"
+        visibility: "PUBLIC"
+      defaultValue: "COL_1"
+    jv_val_2:
+      metadata:
+        type: "TEXT"
+        description: "Copied variable that gets independent copies in each branch"
+        scope: "COPIED"
+        visibility: "PUBLIC"
+      defaultValue: "COL_2"
+design:
+  components:
+    Start:
+      position:
+        x: 0
+        y: 0
+    Update Variable Branch 1:
+      position:
+        x: 160
+        y: -60
+    Update Variable Branch 2:
+      position:
+        x: 160
+        y: 60
+    Create Table Branch 1:
+      position:
+        x: 320
+        y: -60
+    Create Table Branch 2:
+      position:
+        x: 320
+        y: 60
+    Synchronize Branches:
+      position:
+        x: 480
+        y: 0
+    Create Final Table:
+      position:
+        x: 640
+        y: 0

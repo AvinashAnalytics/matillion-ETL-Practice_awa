@@ -122,15 +122,13 @@ pipeline:
         schema: "[Environment Default]"
         targetTable: "stg_batteryelectric_narrow"
         orderBy:
-  variables:
-    jv_col_list:
-      metadata:
-        type: "TEXT"
-        description: "List of columns to unpivot, comma separated, enclosed in double\
-          \ quotes"
-        scope: "COPIED"
-        visibility: "PUBLIC"
-      defaultValue: ""
+variables:
+  jv_col_list:
+    type: "TEXT"
+    description: "List of columns to unpivot, comma separated, enclosed in double quotes"
+    scope: "COPIED"
+    visibility: "PUBLIC"
+    defaultValue: ""
 design:
   components:
     stg_batteryelectric_wide:
