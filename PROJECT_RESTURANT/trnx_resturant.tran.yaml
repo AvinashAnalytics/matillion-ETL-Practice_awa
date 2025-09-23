@@ -158,19 +158,19 @@ pipeline:
         - - "total_price"
           - "Sum"
         groupingType: "Group By"
-    Customer Lifetime Value:
+    Customer Lifetime Value Output:
       type: "rewrite-table"
       sources:
-      - "Rename 3"
+      - "CLV Column Formatting"
       parameters:
-        componentName: "Customer Lifetime Value"
+        componentName: "Customer Lifetime Value Output"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
         schema: "[Environment Default]"
         targetTable: "CLV"
         orderBy:
-        - - "customer_id"
-          - "ASCENDING"
+        - - "total_spent"
+          - "DESCENDING"
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
@@ -188,7 +188,7 @@ pipeline:
     ' Average Order Value':
       type: "rewrite-table"
       sources:
-      - "Rename"
+      - "AOV Column Formatting"
       parameters:
         componentName: " Average Order Value"
         warehouse: "[Environment Default]"
@@ -227,7 +227,7 @@ pipeline:
     Rename 2:
       type: "rename"
       sources:
-      - "Top Selling Menu Items"
+      - "Menu Performance Analysis"
       parameters:
         componentName: "Rename 2"
         columnMapping:
@@ -240,12 +240,12 @@ pipeline:
         - - "sum_total_price"
           - "total_revenue"
         includeInputColumns: "No"
-    Rename 3:
+    CLV Column Formatting:
       type: "rename"
       sources:
-      - "Total revenue generated per customer over time"
+      - "CLV Aggregation"
       parameters:
-        componentName: "Rename 3"
+        componentName: "CLV Column Formatting"
         columnMapping:
         - - "sum_total_price"
           - "total_spent"
@@ -254,12 +254,12 @@ pipeline:
         - - "customer_name"
           - "customer_name"
         includeInputColumns: "No"
-    Top Selling Menu Items (by Revenue & Quantity):
+    Top Selling Items Output:
       type: "rewrite-table"
       sources:
       - "Rename 2"
       parameters:
-        componentName: "Top Selling Menu Items (by Revenue & Quantity)"
+        componentName: "Top Selling Items Output"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
         schema: "[Environment Default]"
@@ -288,7 +288,7 @@ pipeline:
     Rename 4:
       type: "rename"
       sources:
-      - " employees generate the most revenue"
+      - "Employee Performance Analysis"
       parameters:
         componentName: "Rename 4"
         columnMapping:
@@ -458,7 +458,7 @@ design:
       tempMetlId: 5
     Master Dataset Output:
       position:
-        x: 1200
+        x: 1420
         "y": 480
       tempMetlId: 6
     Order Value Calculator:
@@ -468,111 +468,111 @@ design:
       tempMetlId: 7
     CLV Aggregation:
       position:
-        x: 640
+        x: 680
         "y": 80
       tempMetlId: 8
-    Customer Lifetime Value:
+    Customer Lifetime Value Output:
       position:
-        x: 1000
+        x: 1090
         "y": 80
       tempMetlId: 9
     AOV Calculation:
       position:
-        x: 640
-        "y": 440
+        x: 680
+        "y": 350
       tempMetlId: 10
     ' Average Order Value':
       position:
-        x: 1000
-        "y": 440
+        x: 1120
+        "y": 350
       tempMetlId: 11
     Menu Performance Analysis:
       position:
-        x: 640
-        "y": 920
+        x: 700
+        "y": 630
       tempMetlId: 12
     AOV Column Formatting:
       position:
-        x: 920
-        "y": 440
+        x: 880
+        "y": 350
       tempMetlId: 13
     Rename 2:
       position:
-        x: 820
-        "y": 920
+        x: 940
+        "y": 630
       tempMetlId: 14
-    Rename 3:
+    CLV Column Formatting:
       position:
-        x: 820
+        x: 860
         "y": 80
       tempMetlId: 15
-    Top Selling Menu Items (by Revenue & Quantity):
+    Top Selling Items Output:
       position:
-        x: 1000
-        "y": 920
+        x: 1140
+        "y": 630
       tempMetlId: 16
     Employee Performance Analysis:
       position:
-        x: 640
-        "y": 1160
+        x: 690
+        "y": 960
       tempMetlId: 17
     Rename 4:
       position:
-        x: 820
-        "y": 1160
+        x: 940
+        "y": 960
       tempMetlId: 18
     ' Employee Sales Performance':
       position:
-        x: 1000
-        "y": 1160
+        x: 1160
+        "y": 960
       tempMetlId: 19
     Customer Order Join:
       position:
-        x: 280
-        "y": 1320
+        x: 160
+        "y": 1340
       tempMetlId: 20
     Customer Retention by Loyalty:
       position:
-        x: 460
-        "y": 1320
+        x: 530
+        "y": 1330
       tempMetlId: 21
     Returning Customers by Loyalty:
       position:
-        x: 460
-        "y": 1440
+        x: 400
+        "y": 1490
       tempMetlId: 22
     Returning Customer Count:
       position:
-        x: 640
-        "y": 1440
+        x: 660
+        "y": 1490
       tempMetlId: 23
     Retention Rate Calculation:
       position:
-        x: 820
-        "y": 1360
+        x: 860
+        "y": 1320
       tempMetlId: 24
     Customer Retention Results:
       position:
-        x: 1000
-        "y": 1360
+        x: 1140
+        "y": 1320
       tempMetlId: 25
     Customer Retention Analysis Results:
       position:
-        x: 1200
-        "y": 1360
+        x: 1370
+        "y": 1320
       tempMetlId: 26
   notes:
     "1":
       position:
-        x: 76
-        "y": 65
+        x: -240
+        "y": 260
       size:
-        height: 280
-        width: 220
+        height: 410
+        width: 310
       theme: "light-blue"
       content: |
         ### **📊 Source Data**
-        
+
         **Restaurant Tables:**
         - 🧑 Customers (loyalty levels)
         - 👥 Employees (positions)
@@ -580,15 +580,15 @@ design:
         - 📋 Orders (transactions)
     "2":
       position:
-        x: 318
-        "y": 75
+        x: 120
+        "y": 250
       size:
-        height: 250
+        height: 430
         width: 280
       theme: "light-green"
       content: |
         ### **🔗 Data Processing**
-        
+
         **Core Operations:**
         - Joins all 4 tables
         - Calculates total_price (price × quantity)
@@ -596,84 +596,84 @@ design:
         - Feeds all KPI branches
     "3":
       position:
-        x: 580
-        "y": -121
+        x: 640
+        "y": -60
       size:
-        height: 175
-        width: 480
+        height: 265
+        width: 580
       theme: "light-yellow"
       content: |
         ### **💰 KPI #1: Customer Lifetime Value**
-        
+
         **Question:** Who are most valuable customers?
         **Output:** CLV table with rankings
     "4":
       position:
-        x: 618
-        "y": 301
+        x: 640
+        "y": 240
       size:
-        height: 115
-        width: 480
+        height: 215
+        width: 590
       theme: "light-yellow"
       content: |
         ### **📈 KPI #2: Average Order Value**
-        
+
         **Question:** Average transaction size?
     "5":
       position:
-        x: 139
-        "y": 580
+        x: 650
+        "y": 530
       size:
-        height: 100
-        width: 480
+        height: 220
+        width: 630
       theme: "light-yellow"
       content: |
         ### **🍔 KPI #3: Top Selling Items**
-        
+
         **Output:** TOP_SELLING table
     "6":
       position:
-        x: 780
-        "y": 739
+        x: 640
+        "y": 840
       size:
-        height: 160
-        width: 480
+        height: 260
+        width: 630
       theme: "light-yellow"
       content: |
         ### **👥 KPI #4: Employee Performance**
-        
+
         **Question:** Top performing employees?
         **Output:** SALES_PERFO table
     "7":
       position:
-        x: -421
-        "y": 780
+        x: 80
+        "y": 1130
       size:
-        height: 115
-        width: 1040
+        height: 455
+        width: 1560
       theme: "red"
       content: |
         ### **🎯 KPI #5: Customer Retention by Loyalty Level**
-        
+
         **Method:** LEFT join captures ALL customers | **Output:** CUSTOMER_RETENTION
     "8":
       position:
-        x: 1180
-        "y": 0
+        x: 1480
+        "y": 380
       size:
         height: 330
-        width: 200
+        width: 220
       theme: "green"
       content: |
         ### **📤 Final Tables**
-        
+
         **6 Analytics Outputs:**
-        
+
         ✅ Master Dataset
         ✅ CLV
         ✅ AOV
         ✅ TOP_SELLING
         ✅ SALES_PERFO
         ✅ RETENTION
-        
+
         **Dashboard Ready!** 📊
