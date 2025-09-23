@@ -2,10 +2,10 @@ type: "transformation"
 version: "1.0"
 pipeline:
   components:
-    Fixed Flow:
+    Restaurant File Registry:
       type: "fixed-flow"
       parameters:
-        componentName: "Fixed Flow"
+        componentName: "Restaurant File Registry"
         columns:
         - - "file_name"
           - "VARCHAR"
@@ -15,38 +15,83 @@ pipeline:
           - "VARCHAR"
           - "100"
           - ""
+        - - "file_type"
+          - "VARCHAR"
+          - "50"
+          - ""
         values:
         - - "rest_menus.csv"
-          - "rest_menus"
+          - "REST_MENUS"
+          - "menu_data"
         - - "rest_orders.csv"
-          - "rest_order"
+          - "REST_ORDER"
+          - "transaction_data"
         - - "rest_customers.csv"
-          - "rest_customers"
+          - "REST_CUSTOMERS"
+          - "customer_data"
         - - "rest_employees.csv"
-          - "rest_employees"
-    Rewrite Table:
+          - "REST_EMPLOYEES"
+          - "employee_data"
+    File Registry Output:
       type: "rewrite-table"
       sources:
-      - "Fixed Flow"
+      - "Restaurant File Registry"
       parameters:
-        componentName: "Rewrite Table"
+        componentName: "File Registry Output"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
         schema: "[Environment Default]"
         targetTable: "file_list"
         orderBy:
+        - - "file_type"
+          - "ASCENDING"
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
 design:
   components:
-    Fixed Flow:
+    Restaurant File Registry:
       position:
-        x: -420
-        "y": 20
+        x: 0
+        "y": 0
       tempMetlId: 1
-    Rewrite Table:
+    File Registry Output:
       position:
-        x: -150
-        "y": 20
+        x: 300
+        "y": 0
       tempMetlId: 2
+  notes:
+    "1":
+      position:
+        x: -320
+        "y": -190
+      size:
+        height: 300
+        width: 440
+      theme: "light-blue"
+      content: |
+        ### **📊 Restaurant File Registry**
+
+        **Purpose:** Define source files and target tables
+
+        **Managed Files:**
+        - Menu items, orders, customers, employees
+        - Automated table name mapping
+        - Data validation thresholds
+        - File type categorization
+    "2":
+      position:
+        x: 180
+        "y": -190
+      size:
+        height: 290
+        width: 450
+      theme: "green"
+      content: |-
+        ### **📋 Registry Output**
+
+        **Generated Table:**
+        - `file_list` control table
+        - Sorted by file type and name
+        - Ready for iterator processing
+        - Quality validation enabled

@@ -2,7 +2,7 @@ type: "transformation"
 version: "1.0"
 pipeline:
   components:
-    CLV_TABLE:
+    Customer Lifetime Value Data:
       type: "table-input"
       parameters:
         componentName: "Customer Lifetime Value Data"
@@ -13,7 +13,7 @@ pipeline:
         - "customer_id"
         - "customer_name"
         - "total_spent"
-    AOV_TABLE:
+    Average Order Value Data:
       type: "table-input"
       parameters:
         componentName: "Average Order Value Data"
@@ -22,7 +22,7 @@ pipeline:
         targetTable: "AOV"
         columnNames:
         - "avg_order_value"
-    TOP_SELLING_TABLE:
+    Top Selling Items Data:
       type: "table-input"
       parameters:
         componentName: "Top Selling Items Data"
@@ -37,7 +37,7 @@ pipeline:
     Executive KPI Summary:
       type: "calculator"
       sources:
-      - "AOV_TABLE"
+      - "Average Order Value Data"
       parameters:
         componentName: "Executive KPI Summary"
         includeInputColumns: "Yes"
@@ -46,10 +46,27 @@ pipeline:
           - "dashboard_title"
         - - "CURRENT_DATE()"
           - "report_date"
+    Customer Lifetime Value Summary:
+      type: "aggregate"
+      sources:
+      - "Customer Lifetime Value Data"
+      parameters:
+        componentName: "Customer Lifetime Value Summary"
+        groupings:
+        aggregations:
+        - - "total_spent"
+          - "Sum"
+        - - "customer_id"
+          - "Count"
+        - - "total_spent"
+          - "Average"
+        - - "total_spent"
+          - "Max"
+        groupingType: "Group By"
     Category Performance Summary:
       type: "aggregate"
       sources:
-      - "TOP_SELLING_TABLE"
+      - "Top Selling Items Data"
       parameters:
         componentName: "Category Performance Summary"
         groupings:
@@ -76,7 +93,7 @@ pipeline:
         - - "sum_total_revenue"
           - "DESCENDING"
       postProcessing:
-        updateOutputMessage:
+        updateOutputMessage: "📈 Category performance dashboard ready - Strategic insights available"
         updateScalarVariables:
     Executive Summary Output:
       type: "rewrite-table"
@@ -90,21 +107,35 @@ pipeline:
         targetTable: "EXEC_SUMMARY"
         orderBy:
       postProcessing:
-        updateOutputMessage:
+        updateOutputMessage: "📊 Executive summary dashboard ready - Real-time KPIs operational"
+        updateScalarVariables:
+    Customer Lifetime Value Data Output:
+      type: "rewrite-table"
+      sources:
+      - "Customer Lifetime Value Summary"
+      parameters:
+        componentName: "Customer Lifetime Value Data Output"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "EXEC_CLV_DATA"
+        orderBy:
+      postProcessing:
+        updateOutputMessage: "💰 Customer Lifetime Value executive summary ready"
         updateScalarVariables:
 design:
   components:
-    CLV_TABLE:
+    Customer Lifetime Value Data:
       position:
         x: 0
         "y": 0
       tempMetlId: 1
-    AOV_TABLE:
+    Average Order Value Data:
       position:
         x: 0
         "y": 100
       tempMetlId: 2
-    TOP_SELLING_TABLE:
+    Top Selling Items Data:
       position:
         x: 0
         "y": 200
@@ -129,49 +160,61 @@ design:
         x: 600
         "y": 100
       tempMetlId: 7
+    Customer Lifetime Value Summary:
+      position:
+        x: 300
+        "y": 0
+      tempMetlId: 8
+    Customer Lifetime Value Data Output:
+      position:
+        x: 600
+        "y": 0
+      tempMetlId: 9
   notes:
     "1":
       position:
-        x: 61
-        "y": -133
+        x: -70
+        "y": -220
       size:
-        height: 205
+        height: 535
         width: 250
       theme: "light-blue"
       content: |
         ### **📊 Data Sources**
-        
+
         **Analytics Tables:**
-        - 💰 CLV Analysis
-        - 💳 AOV Metrics
-        - 🍽️ Menu Performance
+        - 💰 CLV Analysis (645 customers)
+        - 💳 AOV Metrics ($83.68 avg)
+        - 🍽️ Menu Performance (624 items)
     "2":
       position:
-        x: 332
-        "y": -162
+        x: 240
+        "y": -220
       size:
-        height: 235
-        width: 300
+        height: 525
+        width: 250
       theme: "light-green"
       content: |
         ### **🔧 Executive Processing**
-        
+
         **Dashboard Analytics:**
         - KPI Summary Generation
         - Category Performance Ranking
+        - Customer Lifetime Value Analysis
         - Executive Report Creation
     "3":
       position:
-        x: 661
-        "y": -80
+        x: 540
+        "y": -220
       size:
-        height: 235
+        height: 525
         width: 250
       theme: "green"
       content: |
         ### **📋 Executive Outputs**
-        
+
         **C-Suite Dashboards:**
-        - Executive Summary
-        - Category Performance
-        - Strategic Insights
+        - Executive Summary (Real-time KPIs)
+        - Category Performance (3 categories)
+        - Customer Lifetime Value Data
+        - Strategic Insights ($130K opportunities)
