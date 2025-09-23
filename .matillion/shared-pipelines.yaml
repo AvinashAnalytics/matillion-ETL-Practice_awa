@@ -1,0 +1,35 @@
+# This file contains shared pipelines configuration which defines how they appear to consuming users.
+# The configuration is automatically updated when changes are made to shared pipelines in the Designer UI.
+# Please exercise caution when manually editing to avoid conflicts or data loss.
+# For more information please see our documentation.
+
+version: "1.0"
+type: shared-pipelines-config
+pipelines:
+  - pipeline: Orchestration/orc_file_ilterator.orch.yaml
+    displayName: orc_file_ilterator
+    id: orc_file_ilterator
+    description: ""
+    enabled: false
+    parameters:
+      filter_regex:
+        type: TEXT
+        exportAllowed: true
+        description: ""
+      file_name:
+        type: TEXT
+        exportAllowed: true
+        description: ""
+      file_dir:
+        type: TEXT
+        exportAllowed: true
+        description: ""
+      file:
+        type: GRID
+        exportAllowed: true
+        description: ""
+        columns:
+          filename:
+            columnType: TEXT
+          dir:
+            columnType: TEXT

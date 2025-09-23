@@ -22,7 +22,7 @@ pipeline:
       parameters:
         componentName: "CREATE SHEET_NAMES"
         warehouse: "[Environment Default]"
-        database: "[Environment Default]"
+        database: "MATILLION"
         schema: "MAT_PRO"
         targetTable: "GW_SHEET_NAMES"
         orderBy:

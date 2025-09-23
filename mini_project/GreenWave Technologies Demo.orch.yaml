@@ -6,23 +6,10 @@ pipeline:
       type: "start"
       transitions:
         unconditional:
-        - "Run Create SHEET_NAMES"
         - "Replace GW_CUSTOMER_ACCOUNTS"
+        - "Run Transformation 2"
       parameters:
         componentName: "Start"
-    Run Create SHEET_NAMES:
-      type: "run-transformation"
-      transitions:
-        success:
-        - "Table Iterator"
-      parameters:
-        componentName: "Run Create SHEET_NAMES"
-        transformationJob: "mini_project/trns_project.tran.yaml"
-        setScalarVariables:
-        setGridVariables:
-      postProcessing:
-        updateOutputMessage:
-        updateScalarVariables:
     Excel Query:
       type: "excel-query"
       parameters:
@@ -37,7 +24,7 @@ pipeline:
         primaryKeys:
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_${worksheet_name}"
         stage: "[Custom]"
         stagePlatform: "Snowflake Managed"
@@ -56,7 +43,7 @@ pipeline:
         componentName: "Table Iterator"
         mode: "Basic"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_SHEET_NAMES"
         concurrency: "Sequential"
         columnMapping:
@@ -77,7 +64,7 @@ pipeline:
         componentName: "Replace GW_CUSTOMER_ACCOUNTS"
         createMethod: "Replace"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         table: "GW_CUSTOMER_ACCOUNTS"
         snowflakeTableType: "Permanent"
         columns:
@@ -112,7 +99,7 @@ pipeline:
         encryption: "None"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_CUSTOMER_ACCOUNTS"
         loadColumns:
         format: "[Custom]"
@@ -138,17 +125,30 @@ pipeline:
       type: "and"
       transitions:
         unconditional:
-        - "Run Calculate Profit and Revenue"
+        - "Run Transformation"
       parameters:
         componentName: "Wait for loads"
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
-    Run Calculate Profit and Revenue:
+    Run Transformation:
       type: "run-transformation"
       parameters:
-        componentName: "Run Calculate Profit and Revenue"
+        componentName: "Run Transformation"
         transformationJob: "mini_project/Calculate Profit and Revenue.tran.yaml"
+        setScalarVariables:
+        setGridVariables:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+    Run Transformation 2:
+      type: "run-transformation"
+      transitions:
+        success:
+        - "Table Iterator"
+      parameters:
+        componentName: "Run Transformation 2"
+        transformationJob: "mini_project/trns_project.tran.yaml"
         setScalarVariables:
         setGridVariables:
       postProcessing:
@@ -169,20 +169,15 @@ design:
         x: -450
         "y": -100
       tempMetlId: 1
-    Run Create SHEET_NAMES:
-      position:
-        x: -290
-        "y": 0
-      tempMetlId: 2
     Excel Query:
       position:
-        x: -90
-        "y": -20
+        x: -100
+        "y": 0
       tempMetlId: 3
     Table Iterator:
       position:
-        x: -90
-        "y": -20
+        x: -100
+        "y": 0
       tempMetlId: 4
     Replace GW_CUSTOMER_ACCOUNTS:
       position:
@@ -199,8 +194,13 @@ design:
         x: 130
         "y": -90
       tempMetlId: 7
-    Run Calculate Profit and Revenue:
+    Run Transformation:
       position:
         x: 290
         "y": -90
       tempMetlId: 8
+    Run Transformation 2:
+      position:
+        x: -280
+        "y": 10
+      tempMetlId: 9

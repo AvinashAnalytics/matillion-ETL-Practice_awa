@@ -1,0 +1,52 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    Fixed Flow:
+      type: "fixed-flow"
+      parameters:
+        componentName: "Fixed Flow"
+        columns:
+        - - "file_name"
+          - "VARCHAR"
+          - "100"
+          - ""
+        - - "table_name"
+          - "VARCHAR"
+          - "100"
+          - ""
+        values:
+        - - "rest_menus.csv"
+          - "rest_menus"
+        - - "rest_orders.csv"
+          - "rest_order"
+        - - "rest_customers.csv"
+          - "rest_customers"
+        - - "rest_employees.csv"
+          - "rest_employees"
+    Rewrite Table:
+      type: "rewrite-table"
+      sources:
+      - "Fixed Flow"
+      parameters:
+        componentName: "Rewrite Table"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "file_list"
+        orderBy:
+      postProcessing:
+        updateOutputMessage:
+        updateScalarVariables:
+design:
+  components:
+    Fixed Flow:
+      position:
+        x: -420
+        "y": 20
+      tempMetlId: 1
+    Rewrite Table:
+      position:
+        x: -150
+        "y": 20
+      tempMetlId: 2

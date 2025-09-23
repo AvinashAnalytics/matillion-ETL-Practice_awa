@@ -2,22 +2,22 @@ type: "transformation"
 version: "1.0"
 pipeline:
   components:
-    GW_CUSTOMER_ACCOUNTS:
+    Load_Customer_Data:
       type: "table-input"
       parameters:
-        componentName: "Load Customer Account Data - Reads customer account information from JSON nested data structure"
+        componentName: "Load_Customer_Data"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_CUSTOMER_ACCOUNTS"
         columnNames:
         - "DATA_VALUE"
         timeOffset:
-    ACC:
+    Extract_Customer_Details:
       type: "extract-nested-data-sf"
       sources:
-      - "GW_CUSTOMER_ACCOUNTS"
+      - "Load_Customer_Data"
       parameters:
-        componentName: "Extract Customer Info - Flattens nested JSON to extract customer_rid and account_name fields"
+        componentName: "Extract_Customer_Details"
         includeInputColumns: "No"
         columns:
         - name: "data"
@@ -59,12 +59,12 @@ pipeline:
         arrayPrefix: "f"
         castingMethod: "Fail on invalid data"
         caseColumnAliasNames: "No"
-    GW_ITEMS:
+    Load_Items_Data:
       type: "table-input"
       parameters:
-        componentName: "Load Items Data - Retrieves product catalog with pricing and cost information"
+        componentName: "Load_Items_Data"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_ITEMS"
         columnNames:
         - "RowId"
@@ -74,12 +74,12 @@ pipeline:
         - "COST"
         - "LAST_UPDATED"
         timeOffset:
-    GW_ORDERS:
+    Load_Orders_Data:
       type: "table-input"
       parameters:
-        componentName: "Load Orders Data - Reads order headers with customer relationships and dates"
+        componentName: "Load_Orders_Data"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_ORDERS"
         columnNames:
         - "RowId"
@@ -88,12 +88,12 @@ pipeline:
         - "ORDER_DATE"
         - "LAST_UPDATED"
         timeOffset:
-    GW_ORDER_ITEMS:
+    Load_Order_Items_Data:
       type: "table-input"
       parameters:
-        componentName: "Load Order Line Items - Gets detailed order items with quantities per order"
+        componentName: "Load_Order_Items_Data"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_ORDER_ITEMS"
         columnNames:
         - "RowId"
@@ -103,12 +103,12 @@ pipeline:
         - "QUANTITY"
         - "LAST_UPDATED"
         timeOffset:
-    ORDER:
+    Convert_Orders_Types:
       type: "convert-type"
       sources:
-      - "GW_ORDERS"
+      - "Load_Orders_Data"
       parameters:
-        componentName: "Type Convert Orders - Converts order fields to proper data types (NUMBER, DATE)"
+        componentName: "Convert_Orders_Types"
         conversions:
         - - "CUSTOMER_RID"
           - "NUMBER"
@@ -122,12 +122,12 @@ pipeline:
           - "DATE"
           - ""
           - ""
-    ITEM_REF:
+    Convert_Items_Types:
       type: "convert-type"
       sources:
-      - "GW_ITEMS"
+      - "Load_Items_Data"
       parameters:
-        componentName: "Type Convert Items - Converts item price and cost fields to NUMBER data type"
+        componentName: "Convert_Items_Types"
         conversions:
         - - "RID"
           - "NUMBER"
@@ -141,12 +141,12 @@ pipeline:
           - "NUMBER"
           - ""
           - ""
-    ORDER_ITEM:
+    Convert_Order_Items_Types:
       type: "convert-type"
       sources:
-      - "GW_ORDER_ITEMS"
+      - "Load_Order_Items_Data"
       parameters:
-        componentName: "Type Convert Order Items - Converts order item IDs and quantities to NUMBER data type"
+        componentName: "Convert_Order_Items_Types"
         conversions:
         - - "ITEM_RID"
           - "NUMBER"
@@ -164,25 +164,25 @@ pipeline:
           - "NUMBER"
           - ""
           - ""
-    Integrate:
+    Join_All_Sales_Data:
       type: "join"
       sources:
-      - "ACC"
-      - "ORDER"
-      - "ITEM_REF"
-      - "ORDER_ITEM"
+      - "Extract_Customer_Details"
+      - "Convert_Orders_Types"
+      - "Convert_Items_Types"
+      - "Convert_Order_Items_Types"
       parameters:
-        componentName: "Join All Data - Combines orders, items, customers, and order details into single dataset"
-        mainTable: "ORDER_ITEM"
+        componentName: "Join_All_Sales_Data"
+        mainTable: "Convert_Order_Items_Types"
         mainTableAlias: "OI"
         joins:
-        - - "ORDER"
+        - - "Convert_Orders_Types"
           - "O"
           - "Inner"
-        - - "ITEM_REF"
+        - - "Convert_Items_Types"
           - "I"
           - "Inner"
-        - - "ACC"
+        - - "Extract_Customer_Details"
           - "A"
           - "Inner"
         joinExpressions:
@@ -205,12 +205,12 @@ pipeline:
           - "PRICE"
         - - "A.account_name"
           - "ACCOUNT_NAME"
-    Calculator:
+    Calculate_Business_Metrics:
       type: "calculator"
       sources:
-      - "Integrate"
+      - "Join_All_Sales_Data"
       parameters:
-        componentName: "Calculate Business Metrics - Computes profit, revenue, and order month for analysis"
+        componentName: "Calculate_Business_Metrics"
         includeInputColumns: "Yes"
         calculations:
         - - "(\"PRICE\"-\"COST\")*\"QUANTITY\""
@@ -219,12 +219,12 @@ pipeline:
           - "REVENUE"
         - - "TRUNCATE(\"ORDER_DATE\", 'mm')"
           - "ORDER_MONTH"
-    Aggregate:
+    Summarize_Sales_by_Account:
       type: "aggregate"
       sources:
-      - "Calculator"
+      - "Calculate_Business_Metrics"
       parameters:
-        componentName: "Summarize by Account & Item - Groups data and sums profit/revenue by customer account, item, and month"
+        componentName: "Summarize_Sales_by_Account"
         groupings:
         - "ITEM_NAME"
         - "ACCOUNT_NAME"
@@ -235,81 +235,81 @@ pipeline:
         - - "REVENUE"
           - "Sum"
         groupingType: "Group By"
-    Rewrite GW_PROFIT_BY_ACCOUNT:
+    Save_Results_to_Table:
       type: "rewrite-table"
       sources:
-      - "Aggregate"
+      - "Summarize_Sales_by_Account"
       parameters:
-        componentName: "Write Final Results - Saves aggregated profit and revenue data to target table"
+        componentName: "Save_Results_to_Table"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
-        schema: "[Environment Default]"
+        schema: "MAT_PRO"
         targetTable: "GW_PROFIT_BY_ACCOUNT"
         orderBy:
         - - "ORDER_MONTH"
           - "ASCENDING"
       postProcessing:
-        updateOutputMessage:
+        updateOutputMessage: "${sysvar.thisComponent.rowCount}"
         updateScalarVariables:
 design:
   components:
-    GW_CUSTOMER_ACCOUNTS:
+    Load_Customer_Data:
       position:
-        x: -360
-        "y": -60
+        x: 0
+        "y": 0
       tempMetlId: 1
-    ACC:
+    Extract_Customer_Details:
       position:
-        x: -170
-        "y": -60
+        x: 200
+        "y": 0
       tempMetlId: 2
-    GW_ITEMS:
+    Load_Items_Data:
       position:
-        x: -360
-        "y": 160
+        x: 0
+        "y": 100
       tempMetlId: 3
-    GW_ORDERS:
+    Load_Orders_Data:
       position:
-        x: -360
-        "y": 60
+        x: 0
+        "y": 200
       tempMetlId: 4
-    GW_ORDER_ITEMS:
+    Load_Order_Items_Data:
       position:
-        x: -360
-        "y": 260
+        x: 0
+        "y": 300
       tempMetlId: 5
-    ORDER:
+    Convert_Orders_Types:
       position:
-        x: -160
-        "y": 60
+        x: 200
+        "y": 200
       tempMetlId: 6
-    ITEM_REF:
+    Convert_Items_Types:
       position:
-        x: -160
-        "y": 160
+        x: 200
+        "y": 100
       tempMetlId: 7
-    ORDER_ITEM:
+    Convert_Order_Items_Types:
       position:
-        x: -160
-        "y": 260
+        x: 200
+        "y": 300
       tempMetlId: 8
-    Integrate:
+    Join_All_Sales_Data:
       position:
-        x: 130
-        "y": 120
+        x: 400
+        "y": 150
       tempMetlId: 9
-    Calculator:
+    Calculate_Business_Metrics:
       position:
-        x: 290
-        "y": 120
+        x: 600
+        "y": 150
       tempMetlId: 10
-    Aggregate:
+    Summarize_Sales_by_Account:
       position:
-        x: 450
-        "y": 120
+        x: 800
+        "y": 150
       tempMetlId: 11
-    Rewrite GW_PROFIT_BY_ACCOUNT:
+    Save_Results_to_Table:
       position:
-        x: 610
-        "y": 120
+        x: 1000
+        "y": 150
       tempMetlId: 12

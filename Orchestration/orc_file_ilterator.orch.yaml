@@ -69,10 +69,11 @@ pipeline:
         inputDataUrl1: "s3://matillion-projects-awa"
         maxIterations: "5"
         filterRegex: "${file_dir}/${file_name}.*_NEW.*"
-        concurrency: "Concurrent"
+        concurrency: "Sequential"
         variables:
-        - - "sysvar"
+        - - "file_name"
           - "Filename"
+        breakOnFailure: "Yes"
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
