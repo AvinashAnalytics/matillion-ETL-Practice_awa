@@ -58,7 +58,7 @@ pipeline:
         - "menu_id"
         - "quantity"
         timeOffset:
-    Join:
+    Master Data Join:
       type: "join"
       sources:
       - "REST_CUSTOMERS"
@@ -66,7 +66,7 @@ pipeline:
       - "REST_MENUS"
       - "REST_ORDER"
       parameters:
-        componentName: "Join"
+        componentName: "Master Data Join"
         mainTable: "REST_CUSTOMERS"
         mainTableAlias: "c"
         joins:
@@ -121,12 +121,12 @@ pipeline:
           - "position"
         - - "e.hire_date"
           - "hire_date"
-    Rewrite Table:
+    Master Dataset Output:
       type: "rewrite-table"
       sources:
-      - "Join"
+      - "Master Data Join"
       parameters:
-        componentName: "Rewrite Table"
+        componentName: "Master Dataset Output"
         warehouse: "[Environment Default]"
         database: "[Environment Default]"
         schema: "[Environment Default]"
@@ -135,22 +135,22 @@ pipeline:
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
-    Calculator:
+    Order Value Calculator:
       type: "calculator"
       sources:
-      - "Join"
+      - "Master Data Join"
       parameters:
-        componentName: "Calculator"
+        componentName: "Order Value Calculator"
         includeInputColumns: "Yes"
         calculations:
         - - "COALESCE((\"price\"*\"quantity\"),0)"
           - "total_price"
-    Total revenue generated per customer over time:
+    CLV Aggregation:
       type: "aggregate"
       sources:
-      - "Calculator"
+      - "Order Value Calculator"
       parameters:
-        componentName: "Total revenue generated per customer over time"
+        componentName: "CLV Aggregation"
         groupings:
         - "customer_id"
         - "customer_name"
@@ -174,12 +174,12 @@ pipeline:
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
-    Average revenue per ordeR:
+    AOV Calculation:
       type: "aggregate"
       sources:
-      - "Calculator"
+      - "Order Value Calculator"
       parameters:
-        componentName: "Average revenue per ordeR"
+        componentName: "AOV Calculation"
         groupings:
         aggregations:
         - - "total_price"
@@ -199,12 +199,12 @@ pipeline:
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
-    Top Selling Menu Items:
+    Menu Performance Analysis:
       type: "aggregate"
       sources:
-      - "Calculator"
+      - "Order Value Calculator"
       parameters:
-        componentName: "Top Selling Menu Items"
+        componentName: "Menu Performance Analysis"
         groupings:
         - "item_name"
         - "category"
@@ -214,12 +214,12 @@ pipeline:
         - - "total_price"
           - "Sum"
         groupingType: "Group By"
-    Rename:
+    AOV Column Formatting:
       type: "rename"
       sources:
-      - "Average revenue per ordeR"
+      - "AOV Calculation"
       parameters:
-        componentName: "Rename"
+        componentName: "AOV Column Formatting"
         columnMapping:
         - - "avg_total_price"
           - "avg_order_value"
@@ -270,12 +270,12 @@ pipeline:
       postProcessing:
         updateOutputMessage:
         updateScalarVariables:
-    ' employees generate the most revenue':
+    Employee Performance Analysis:
       type: "aggregate"
       sources:
-      - "Calculator"
+      - "Order Value Calculator"
       parameters:
-        componentName: " employees generate the most revenue"
+        componentName: "Employee Performance Analysis"
         groupings:
         - "employee_name"
         - "position"
@@ -451,22 +451,22 @@ design:
         x: 0
         "y": 600
       tempMetlId: 4
-    Join:
+    Master Data Join:
       position:
         x: 280
         "y": 480
       tempMetlId: 5
-    Rewrite Table:
+    Master Dataset Output:
       position:
         x: 1200
         "y": 480
       tempMetlId: 6
-    Calculator:
+    Order Value Calculator:
       position:
         x: 460
         "y": 480
       tempMetlId: 7
-    Total revenue generated per customer over time:
+    CLV Aggregation:
       position:
         x: 640
         "y": 80
@@ -476,7 +476,7 @@ design:
         x: 1000
         "y": 80
       tempMetlId: 9
-    Average revenue per ordeR:
+    AOV Calculation:
       position:
         x: 640
         "y": 440
@@ -486,14 +486,14 @@ design:
         x: 1000
         "y": 440
       tempMetlId: 11
-    Top Selling Menu Items:
+    Menu Performance Analysis:
       position:
         x: 640
         "y": 920
       tempMetlId: 12
-    Rename:
+    AOV Column Formatting:
       position:
-        x: 820
+        x: 920
         "y": 440
       tempMetlId: 13
     Rename 2:
@@ -511,7 +511,7 @@ design:
         x: 1000
         "y": 920
       tempMetlId: 16
-    ' employees generate the most revenue':
+    Employee Performance Analysis:
       position:
         x: 640
         "y": 1160
