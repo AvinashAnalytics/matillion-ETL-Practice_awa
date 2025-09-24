@@ -12,7 +12,7 @@ pipeline:
         columnNames:
         - "customer_id"
         - "customer_name"
-        - "total_spent"
+        - "sum_total_price"
       postProcessing:
         updateOutputMessage: "💰 Loading Customer Lifetime Value analytics: Extracting\
           \ top customer segments and spending patterns for executive revenue strategy"
@@ -25,7 +25,7 @@ pipeline:
         schema: "[Environment Default]"
         targetTable: "AOV"
         columnNames:
-        - "avg_order_value"
+        - "avg_total_price"
       postProcessing:
         updateOutputMessage: "📈 Loading Average Order Value metrics: Retrieving global\
           \ transaction benchmarks for executive performance monitoring"
@@ -40,8 +40,8 @@ pipeline:
         columnNames:
         - "item_name"
         - "category"
-        - "total_quantity_sold"
-        - "total_revenue"
+        - "sum_quantity"
+        - "sum_total_price"
       postProcessing:
         updateOutputMessage: "🍔 Loading menu performance data: Extracting top-selling\
           \ items and category revenue for strategic product planning"
@@ -72,15 +72,22 @@ pipeline:
           - "dashboard_title"
         - - "CURRENT_DATE()"
           - "report_date"
-        - - "CASE \n  WHEN \"avg_order_value\" IS NULL THEN 'Data Error: AOV Missing'\n\
-            \  WHEN \"avg_order_value\" <= 0 THEN 'Data Issue: Invalid AOV'\n  ELSE\
-            \ CONCAT('AOV: $', ROUND(\"avg_order_value\", 2))\nEND\n"
+        - - |
+            CASE 
+              WHEN "avg_total_price" IS NULL THEN 'Data Error: AOV Missing'
+              WHEN "avg_total_price" <= 0 THEN 'Data Issue: Invalid AOV'
+              ELSE CONCAT('AOV: $', ROUND("avg_total_price", 2))
+            END
           - "aov_status"
         - - "TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYY-MM-DD HH24:MI:SS')"
           - "last_updated"
-        - - "CASE\n  WHEN \"avg_order_value\" > 100 THEN 'EXCELLENT'\n  WHEN \"avg_order_value\"\
-            \ > 75 THEN 'GOOD' \n  WHEN \"avg_order_value\" > 50 THEN 'AVERAGE'\n\
-            \  ELSE 'NEEDS_IMPROVEMENT'\nEND\n"
+        - - |
+            CASE
+              WHEN "avg_total_price" > 100 THEN 'EXCELLENT'
+              WHEN "avg_total_price" > 75 THEN 'GOOD' 
+              WHEN "avg_total_price" > 50 THEN 'AVERAGE'
+              ELSE 'NEEDS_IMPROVEMENT'
+            END
           - "performance_rating"
     Customer Lifetime Value Summary:
       type: "aggregate"
@@ -90,13 +97,13 @@ pipeline:
         componentName: "Customer Lifetime Value Summary"
         groupings:
         aggregations:
-        - - "total_spent"
+        - - "sum_total_price"
           - "Sum"
         - - "customer_id"
           - "Count"
-        - - "total_spent"
+        - - "sum_total_price"
           - "Average"
-        - - "total_spent"
+        - - "sum_total_price"
           - "Max"
         groupingType: "Group By"
     Category Performance Summary:
@@ -108,9 +115,9 @@ pipeline:
         groupings:
         - "category"
         aggregations:
-        - - "total_revenue"
+        - - "sum_total_price"
           - "Sum"
-        - - "total_quantity_sold"
+        - - "sum_quantity"
           - "Sum"
         - - "item_name"
           - "Count"
@@ -155,7 +162,7 @@ pipeline:
         schema: "[Environment Default]"
         targetTable: "EXEC_CATEGORY_DASHBOARD"
         orderBy:
-        - - "sum_total_revenue"
+        - - "sum_sum_total_price"
           - "DESCENDING"
       postProcessing:
         updateOutputMessage: "📈 Category performance dashboard ready - Strategic\
