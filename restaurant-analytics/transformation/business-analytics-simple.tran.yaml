@@ -106,7 +106,9 @@ pipeline:
         componentName: "Order Value Calculator"
         includeInputColumns: "Yes"
         calculations:
-        - - "CASE \n  WHEN \"price\" IS NULL OR \"quantity\" IS NULL THEN 0\n  WHEN \"price\" < 0 OR \"quantity\" < 0 THEN 0\n  ELSE COALESCE((\"price\" * \"quantity\"), 0)\nEND\n"
+        - - "CASE \n  WHEN \"price\" IS NULL OR \"quantity\" IS NULL THEN 0\n  WHEN\
+            \ \"price\" < 0 OR \"quantity\" < 0 THEN 0\n  ELSE COALESCE((\"price\"\
+            \ * \"quantity\"), 0)\nEND\n"
           - "total_price"
       postProcessing:
         updateOutputMessage: "🧮 Order values calculated"
@@ -225,9 +227,17 @@ pipeline:
         componentName: "Enhanced Order Calculator"
         includeInputColumns: "Yes"
         calculations:
-        - - "CASE \n  WHEN \"price\" IS NULL OR \"quantity\" IS NULL THEN 0\n  WHEN \"price\" < 0 OR \"quantity\" < 0 THEN 0\n  ELSE COALESCE((\"price\" * \"quantity\"), 0)\nEND"
+        - - "CASE \n  WHEN \"price\" IS NULL OR \"quantity\" IS NULL THEN 0\n  WHEN\
+            \ \"price\" < 0 OR \"quantity\" < 0 THEN 0\n  ELSE COALESCE((\"price\"\
+            \ * \"quantity\"), 0)\nEND"
           - "total_price"
-        - - "CASE\n  WHEN \"total_price\" > 100 THEN 'HIGH_VALUE'\n  WHEN \"total_price\" > 30 THEN 'MEDIUM_VALUE'\n  WHEN \"total_price\" > 0 THEN 'LOW_VALUE'\n  ELSE 'NO_VALUE'\nEND"
+        - - |-
+            CASE
+              WHEN "total_price" > 100 THEN 'HIGH_VALUE'
+              WHEN "total_price" > 30 THEN 'MEDIUM_VALUE'
+              WHEN "total_price" > 0 THEN 'LOW_VALUE'
+              ELSE 'NO_VALUE'
+            END
           - "order_value_tier"
       postProcessing:
         updateOutputMessage: "🧮 Enhanced order calculations completed"
@@ -393,9 +403,12 @@ pipeline:
         componentName: "Customer Retention Formatting"
         includeInputColumns: "Yes"
         calculations:
-        - - "CASE \n  WHEN \"count_distinct_customer_id\" IS NULL OR \"count_distinct_customer_id\" = 0 THEN 0\n  ELSE COALESCE(\"count_distinct_order_id\", 0)\nEND"
+        - - "CASE \n  WHEN \"count_distinct_customer_id\" IS NULL OR \"count_distinct_customer_id\"\
+            \ = 0 THEN 0\n  ELSE COALESCE(\"count_distinct_order_id\", 0)\nEND"
           - "returning_customers"
-        - - "CASE \n  WHEN \"count_distinct_customer_id\" IS NULL OR \"count_distinct_customer_id\" = 0 THEN 0.00\n  ELSE ROUND(COALESCE(\"count_distinct_order_id\", 0) * 100.0 / NULLIF(\"count_distinct_customer_id\", 0), 2)\nEND"
+        - - "CASE \n  WHEN \"count_distinct_customer_id\" IS NULL OR \"count_distinct_customer_id\"\
+            \ = 0 THEN 0.00\n  ELSE ROUND(COALESCE(\"count_distinct_order_id\", 0)\
+            \ * 100.0 / NULLIF(\"count_distinct_customer_id\", 0), 2)\nEND"
           - "retention_rate_percent"
       postProcessing:
         updateOutputMessage: "🧮 Retention rates calculated"
@@ -456,92 +469,115 @@ design:
     REST_CUSTOMERS:
       position:
         x: 50
-        y: 50
+        "y": 50
+      tempMetlId: 1
     REST_ORDER:
       position:
         x: 50
-        y: 200
+        "y": 200
+      tempMetlId: 2
     REST_MENUS:
       position:
         x: 50
-        y: 350
+        "y": 350
+      tempMetlId: 3
     Master Data Join:
       position:
         x: 350
-        y: 200
+        "y": 200
+      tempMetlId: 4
     Order Value Calculator:
       position:
         x: 600
-        y: 200
+        "y": 200
+      tempMetlId: 5
     CLV Aggregation:
       position:
         x: 850
-        y: 200
+        "y": 200
+      tempMetlId: 6
     Customer Lifetime Value Output:
       position:
-        x: 1100
-        y: 200
+        x: 1030
+        "y": 270
+      tempMetlId: 7
     REST_EMPLOYEES:
       position:
         x: 50
-        y: 500
+        "y": 500
+      tempMetlId: 8
     Enhanced Master Join:
       position:
         x: 350
-        y: 350
+        "y": 350
+      tempMetlId: 9
     Enhanced Order Calculator:
       position:
         x: 600
-        y: 350
+        "y": 350
+      tempMetlId: 10
     Master Dataset Output:
       position:
         x: 850
-        y: 350
+        "y": 350
+      tempMetlId: 11
     AOV Calculation:
       position:
         x: 600
-        y: 500
+        "y": 500
+      tempMetlId: 12
     Average Order Value Output:
       position:
         x: 850
-        y: 500
+        "y": 500
+      tempMetlId: 13
     Menu Performance Analysis:
       position:
         x: 600
-        y: 650
+        "y": 650
+      tempMetlId: 14
     Top Selling Items Output:
       position:
         x: 850
-        y: 650
+        "y": 650
+      tempMetlId: 15
     Employee Performance Analysis:
       position:
         x: 600
-        y: 800
+        "y": 800
+      tempMetlId: 16
     Employee Sales Performance Output:
       position:
         x: 850
-        y: 800
+        "y": 800
+      tempMetlId: 17
     Customer Retention Analysis:
       position:
         x: 1150
-        y: 200
+        "y": 200
+      tempMetlId: 18
     Customer Retention Calculation:
       position:
         x: 1400
-        y: 200
+        "y": 200
+      tempMetlId: 19
     Customer Retention Formatting:
       position:
         x: 1650
-        y: 200
+        "y": 200
+      tempMetlId: 20
     Customer Retention Output:
       position:
         x: 1900
-        y: 200
+        "y": 200
+      tempMetlId: 21
     Seasonal Analysis:
       position:
         x: 1150
-        y: 350
+        "y": 350
+      tempMetlId: 22
     Seasonal Performance Output:
       position:
         x: 1400
-        y: 350
+        "y": 350
+      tempMetlId: 23
