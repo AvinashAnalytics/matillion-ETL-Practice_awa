@@ -26,9 +26,7 @@ pipeline:
         updateScalarVariables:
     File Processing Iterator:
       type: "table-iterator"
-      transitions:
-        success:
-        - "Ingestion Completion Logger"
+      transitions: {}
       iterationTarget: "Dynamic Table Creator"
       parameters:
         componentName: "File Processing Iterator"
@@ -51,83 +49,56 @@ pipeline:
         componentName: "Dynamic Table Creator"
         scriptLocation: "Component"
         declareSqlVariables: "Include all"
-        sqlScript: |
-          -- Debug script to log table processing
-          CREATE TABLE IF NOT EXISTS restaurant_ingestion_log (
-            pipeline_run_id VARCHAR(100),
-            total_files_processed INTEGER,
-            completion_timestamp TIMESTAMP,
-            status VARCHAR(50),
-            pipeline_version VARCHAR(10)
-          );
-          
-          INSERT INTO restaurant_ingestion_log (
-            pipeline_run_id,
-            total_files_processed, 
-            completion_timestamp,
-            status,
-            pipeline_version
-          )
-          VALUES (
-            'PROCESS_DEBUG_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS'),
-            1,
-            CURRENT_TIMESTAMP(),
-            'DEBUG_SUCCESS',
-            '1.0'
-          );
+        sqlScript: "-- Dynamic Restaurant Data Ingestion with Schema Inference\n--\
+          \ Drop existing table to ensure clean creation\nDROP TABLE IF EXISTS ${table_name};\n\
+          \n-- Create table with inferred schema from staged file\nCREATE TABLE ${table_name}\
+          \ \nUSING TEMPLATE (\n  SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) \n  FROM TABLE(\n\
+          \    INFER_SCHEMA(\n      LOCATION => '@${stage_name}/${file_name}',\n \
+          \     FILE_FORMAT => '${file_format}'\n    )\n  )\n);\n\n-- Load data into\
+          \ the newly created table with comprehensive error handling\nCOPY INTO ${table_name}\n\
+          FROM '@${stage_name}/${file_name}'\nFILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER\
+          \ = ',' SKIP_HEADER = 1 RECORD_DELIMITER = '\\n')\nON_ERROR = 'SKIP_FILE'\n\
+          RETURN_FAILED_ONLY = TRUE;\n\n-- Enhanced logging for file-level processing\n\
+          CREATE TABLE IF NOT EXISTS restaurant_processing_log (\n  pipeline_run_id\
+          \ VARCHAR(100),\n  file_name VARCHAR(255),\n  table_name VARCHAR(255),\n\
+          \  rows_loaded INTEGER,\n  errors_seen INTEGER,\n  first_error VARCHAR(500),\n\
+          \  processing_timestamp TIMESTAMP,\n  status VARCHAR(50)\n);\n\nINSERT INTO\
+          \ restaurant_processing_log (\n  pipeline_run_id,\n  file_name,\n  table_name,\n\
+          \  rows_loaded,\n  errors_seen,\n  first_error,\n  processing_timestamp,\n\
+          \  status\n)\nSELECT \n  'INGEST_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS'),\n\
+          \  '${file_name}',\n  '${table_name}',\n  COUNT(*),\n  0,\n  CASE \n   \
+          \ WHEN COUNT(*) = 0 THEN 'File skipped due to data quality issues'\n   \
+          \ ELSE NULL\n  END,\n  CURRENT_TIMESTAMP(),\n  CASE \n    WHEN COUNT(*)\
+          \ > 0 THEN 'SUCCESS'\n    ELSE 'FILE_SKIPPED'\n  END\nFROM ${table_name};\n"
       postProcessing:
         updateOutputMessage: "✅ Data ingestion completed for ${file_name} → ${table_name}\
           \ table created with schema validation and quality checks"
         updateScalarVariables:
-    Ingestion Completion Logger:
-      type: "sql-executor"
-      transitions:
-        success:
-        - "Restaurant Analytics Pipeline"
-      parameters:
-        componentName: "Ingestion Completion Logger"
-        scriptLocation: "Component"
-        declareSqlVariables: "Include all"
-        sqlScript: |
-          -- Restaurant Data Ingestion Completion Log
-          CREATE TABLE IF NOT EXISTS restaurant_ingestion_log (
-            pipeline_run_id VARCHAR(50),
-            total_files_processed INTEGER,
-            completion_timestamp TIMESTAMP,
-            status VARCHAR(20),
-            pipeline_version VARCHAR(10)
-          );
-          
-          -- Final pipeline completion with validation
-          INSERT INTO restaurant_ingestion_log (
-            pipeline_run_id,
-            total_files_processed,
-            completion_timestamp,
-            status,
-            pipeline_version
-          )
-          SELECT 
-            'PIPELINE_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS'),
-            COUNT(*),
-            CURRENT_TIMESTAMP(),
-            CASE WHEN COUNT(*) = 4 THEN 'SUCCESS' ELSE 'PARTIAL_SUCCESS' END,
-            '1.0'
-          FROM information_schema.tables
-          WHERE table_name IN ('REST_CUSTOMERS', 'REST_EMPLOYEES', 'REST_MENUS', 'REST_ORDER')
-            AND table_schema = CURRENT_SCHEMA();
-      postProcessing:
-        updateOutputMessage: "🎯 Data ingestion pipeline completed successfully -\
-          \ 4 restaurant tables validated and ready for business intelligence processing"
-        updateScalarVariables:
     Restaurant Analytics Pipeline:
       type: "run-transformation"
+      transitions:
+        success:
+        - "Executive Dashboard Analytics"
       parameters:
         componentName: "Restaurant Analytics Pipeline"
-        transformationJob: "restaurant-analytics/transformation/business-analytics-simple.tran.yaml"
+        transformationJob: "restaurant-analytics/transformation/business-analytics.tran.yaml"
         setScalarVariables:
         setGridVariables:
       postProcessing:
-        updateOutputMessage: "📊 Comprehensive business analytics completed - 7 KPI tables generated: CLV, AOV, Menu Performance, Employee Performance, Customer Retention, Seasonal Analysis, Master Dataset"
+        updateOutputMessage: "📊 Comprehensive business analytics completed - 7 KPI\
+          \ tables generated: CLV, AOV, Menu Performance, Employee Performance, Customer\
+          \ Retention, Seasonal Analysis, Master Dataset"
+        updateScalarVariables:
+    Executive Dashboard Analytics:
+      type: "run-transformation"
+      parameters:
+        componentName: "Executive Dashboard Analytics"
+        transformationJob: "restaurant-analytics/transformation/executive-dashboard.tran.yaml"
+        setScalarVariables:
+        setGridVariables:
+      postProcessing:
+        updateOutputMessage: "🎯 Executive dashboard analytics completed - C-suite\
+          \ ready summaries and strategic insights generated"
         updateScalarVariables:
   variables:
     file_name:
@@ -143,7 +114,7 @@ pipeline:
         description: "Snowflake stage containing restaurant CSV files"
         scope: "SHARED"
         visibility: "PUBLIC"
-      defaultValue: "RESTAURANT_STAGE"
+      defaultValue: "mat_pro.resturant"
     table_name:
       metadata:
         type: "TEXT"
@@ -157,40 +128,39 @@ pipeline:
         description: "File format definition for CSV parsing"
         scope: "SHARED"
         visibility: "PUBLIC"
-      defaultValue: "CSV_FORMAT"
+      defaultValue: "mat_pro.infer_fmt"
 design:
   components:
     Data Ingestion Start:
       position:
         x: -220
         "y": 70
-      tempMetlId: 1
+      tempMetlId:
     Initialize File Registry:
       position:
-        x: -10
+        x: -40
         "y": 70
-      tempMetlId: 2
+      tempMetlId:
     File Processing Iterator:
       position:
         x: 310
         "y": 50
-      tempMetlId: 3
+      tempMetlId:
     Dynamic Table Creator:
       position:
         x: 310
         "y": 50
-      tempMetlId: 4
-    Ingestion Completion Logger:
-      position:
-        x: 710
-        "y": 70
-      tempMetlId: 5
+      tempMetlId:
     Restaurant Analytics Pipeline:
       position:
-        x: 1010
+        x: 1020
         "y": 70
-      tempMetlId: 6
-
+      tempMetlId:
+    Executive Dashboard Analytics:
+      position:
+        x: 1200
+        "y": 70
+      tempMetlId:
   notes:
     "1":
       position:
@@ -213,7 +183,7 @@ design:
     "2":
       position:
         x: 140
-        "y": -290
+        "y": -280
       size:
         height: 480
         width: 380
@@ -226,7 +196,7 @@ design:
     "3":
       position:
         x: 570
-        "y": -290
+        "y": -280
       size:
         height: 480
         width: 330
@@ -243,10 +213,10 @@ design:
     "4":
       position:
         x: 930
-        "y": -290
+        "y": -280
       size:
-        height: 490
-        width: 510
+        height: 480
+        width: 360
       theme: "green"
       content: |
         ### **📊 Analytics Integration**

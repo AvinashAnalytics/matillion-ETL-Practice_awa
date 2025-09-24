@@ -280,8 +280,8 @@ design:
         - Handles missing data gracefully
     "2":
       position:
-        x: 180
-        "y": -401
+        x: 190
+        "y": -310
       size:
         height: 785
         width: 280

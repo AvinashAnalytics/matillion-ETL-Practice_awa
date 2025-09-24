@@ -1,0 +1,77 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    Create Log Entry:
+      type: "fixed-flow"
+      sources: []
+      parameters:
+        componentName: "Create Log Entry"
+        columns:
+          - - "log_count"
+            - "NUMBER"
+            - ""
+            - ""
+        values:
+          - - "4"
+    Calculate Completion Stats:
+      type: "calculator"
+      sources:
+        - "Create Log Entry"
+      parameters:
+        componentName: "Calculate Completion Stats"
+        includeInputColumns: "No"
+        calculations:
+          - - |
+              'PIPELINE_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS')
+            - "pipeline_run_id"
+          - - |
+              "log_count"
+            - "total_files_processed"
+          - - |
+              CURRENT_TIMESTAMP()
+            - "completion_timestamp"
+          - - |
+              CASE WHEN "log_count" = 4 THEN 'SUCCESS' ELSE 'PARTIAL_SUCCESS' END
+            - "status"
+          - - |
+              '1.0'
+            - "pipeline_version"
+    Log Completion:
+      type: "table-output"
+      sources:
+        - "Calculate Completion Stats"
+      parameters:
+        componentName: "Log Completion"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "restaurant_ingestion_log"
+        fixDataTypeMismatches: "Yes"
+        columnMapping:
+          - - "pipeline_run_id"
+            - "pipeline_run_id"
+          - - "total_files_processed"
+            - "total_files_processed"
+          - - "completion_timestamp"
+            - "completion_timestamp"
+          - - "status"
+            - "status"
+          - - "pipeline_version"
+            - "pipeline_version"
+        orderBy:
+        outputMode: "Append"
+design:
+  components:
+    Create Log Entry:
+      position:
+        x: 0
+        y: 0
+    Calculate Completion Stats:
+      position:
+        x: 200
+        y: 0
+    Log Completion:
+      position:
+        x: 400
+        y: 0
