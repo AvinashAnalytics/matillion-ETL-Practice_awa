@@ -235,22 +235,22 @@ design:
       tempMetlId: 4
     Create Ingestion Log Table:
       position:
-        x: 700
+        x: 640
         "y": 70
       tempMetlId: 5
     Restaurant Analytics Pipeline:
       position:
-        x: 1120
+        x: 1000
         "y": 70
       tempMetlId: 6
     Executive Dashboard Analytics:
       position:
-        x: 1300
+        x: 1180
         "y": 70
       tempMetlId: 7
     Log Pipeline Completion:
       position:
-        x: 830
+        x: 820
         "y": 70
       tempMetlId: 8
   notes:
