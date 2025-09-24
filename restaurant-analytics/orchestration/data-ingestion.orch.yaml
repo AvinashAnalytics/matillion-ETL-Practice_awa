@@ -26,7 +26,9 @@ pipeline:
         updateScalarVariables:
     File Processing Iterator:
       type: "table-iterator"
-      transitions: {}
+      transitions:
+        success:
+        - "Create Ingestion Log Table"
       iterationTarget: "Dynamic Table Creator"
       parameters:
         componentName: "File Processing Iterator"
@@ -74,6 +76,72 @@ pipeline:
         updateOutputMessage: "✅ Data ingestion completed for ${file_name} → ${table_name}\
           \ table created with schema validation and quality checks"
         updateScalarVariables:
+    Create Ingestion Log Table:
+      type: "create-table-v2"
+      transitions:
+        success:
+        - "Log Pipeline Completion"
+      parameters:
+        componentName: "Create Ingestion Log Table"
+        createMethod: "Create If Not Exists"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        table: "restaurant_ingestion_log"
+        snowflakeTableType: "Permanent"
+        columns:
+        - - "pipeline_run_id"
+          - "VARCHAR"
+          - "50"
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - "Pipeline execution identifier"
+          - ""
+        - - "total_files_processed"
+          - "NUMBER"
+          - ""
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - "Number of files successfully processed"
+          - ""
+        - - "completion_timestamp"
+          - "TIMESTAMP"
+          - ""
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - "When the pipeline completed"
+          - ""
+        - - "status"
+          - "VARCHAR"
+          - "20"
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - "Pipeline completion status"
+          - ""
+        - - "pipeline_version"
+          - "VARCHAR"
+          - "10"
+          - ""
+          - ""
+          - "No"
+          - "No"
+          - "Version of the pipeline"
+          - ""
+        defaultDdlCollation:
+        primaryKeys:
+        clusteringKeys:
+        dataRetentionTimeInDays:
+        comment: "Log table for restaurant data ingestion pipeline completion tracking"
+      postProcessing:
+        updateOutputMessage: "📋 Ingestion log table ready for completion tracking"
+        updateScalarVariables:
     Restaurant Analytics Pipeline:
       type: "run-transformation"
       transitions:
@@ -99,6 +167,20 @@ pipeline:
       postProcessing:
         updateOutputMessage: "🎯 Executive dashboard analytics completed - C-suite\
           \ ready summaries and strategic insights generated"
+        updateScalarVariables:
+    Log Pipeline Completion:
+      type: "run-transformation"
+      transitions:
+        success:
+        - "Restaurant Analytics Pipeline"
+      parameters:
+        componentName: "Log Pipeline Completion"
+        transformationJob: "restaurant-analytics/transformation/ingestion-completion-logger.tran.yaml"
+        setScalarVariables:
+        setGridVariables:
+      postProcessing:
+        updateOutputMessage: "🎯 Data ingestion pipeline completed successfully -\
+          \ 4 restaurant tables validated and ready for business intelligence processing"
         updateScalarVariables:
   variables:
     file_name:
@@ -135,32 +217,42 @@ design:
       position:
         x: -220
         "y": 70
-      tempMetlId:
+      tempMetlId: 1
     Initialize File Registry:
       position:
         x: -40
         "y": 70
-      tempMetlId:
+      tempMetlId: 2
     File Processing Iterator:
       position:
         x: 310
         "y": 50
-      tempMetlId:
+      tempMetlId: 3
     Dynamic Table Creator:
       position:
         x: 310
         "y": 50
-      tempMetlId:
+      tempMetlId: 4
+    Create Ingestion Log Table:
+      position:
+        x: 700
+        "y": 70
+      tempMetlId: 5
     Restaurant Analytics Pipeline:
       position:
-        x: 1020
+        x: 1120
         "y": 70
-      tempMetlId:
+      tempMetlId: 6
     Executive Dashboard Analytics:
       position:
-        x: 1200
+        x: 1300
         "y": 70
-      tempMetlId:
+      tempMetlId: 7
+    Log Pipeline Completion:
+      position:
+        x: 830
+        "y": 70
+      tempMetlId: 8
   notes:
     "1":
       position:
