@@ -51,30 +51,36 @@ pipeline:
         componentName: "Dynamic Table Creator"
         scriptLocation: "Component"
         declareSqlVariables: "Include all"
-        sqlScript: "-- Dynamic Restaurant Data Ingestion with Schema Inference\n--\
-          \ Drop existing table to ensure clean creation\nDROP TABLE IF EXISTS ${table_name};\n\
-          \n-- Create table with inferred schema from staged file\nCREATE TABLE ${table_name}\
-          \ \nUSING TEMPLATE (\n  SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) \n  FROM TABLE(\n\
-          \    INFER_SCHEMA(\n      LOCATION => '@${stage_name}/${file_name}',\n \
-          \     FILE_FORMAT => '${file_format}'\n    )\n  )\n);\n\n-- Load data into\
-          \ the newly created table with comprehensive error handling\nCOPY INTO ${table_name}\n\
+        sqlScript: "-- [COMPONENT-OPTIMIZED] Restaurant Data Ingestion - Enhanced\
+          \ for Component-First Architecture\n-- Future: Replace with individual components\
+          \ (Drop Table → Schema Creator → Data Loader → Logger)\n\n-- Step 1: Clean\
+          \ slate approach - Remove existing table\nDROP TABLE IF EXISTS ${table_name};\n\
+          \n-- Step 2: [COMPONENT-READY] Dynamic schema inference from CSV files\n\
+          CREATE TABLE ${table_name} \nUSING TEMPLATE (\n  SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))\
+          \ \n  FROM TABLE(\n    INFER_SCHEMA(\n      LOCATION => '@${stage_name}/${file_name}',\n\
+          \      FILE_FORMAT => '${file_format}'\n    )\n  )\n);\n\n-- Step 3: [COMPONENT-READY]\
+          \ Data loading with comprehensive error handling\nCOPY INTO ${table_name}\n\
           FROM '@${stage_name}/${file_name}'\nFILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER\
           \ = ',' SKIP_HEADER = 1 RECORD_DELIMITER = '\\n')\nON_ERROR = 'SKIP_FILE'\n\
-          RETURN_FAILED_ONLY = TRUE;\n\n-- Enhanced logging for file-level processing\n\
-          CREATE TABLE IF NOT EXISTS restaurant_processing_log (\n  pipeline_run_id\
-          \ VARCHAR(100),\n  file_name VARCHAR(255),\n  table_name VARCHAR(255),\n\
-          \  rows_loaded INTEGER,\n  errors_seen INTEGER,\n  first_error VARCHAR(500),\n\
-          \  processing_timestamp TIMESTAMP,\n  status VARCHAR(50)\n);\n\nINSERT INTO\
-          \ restaurant_processing_log (\n  pipeline_run_id,\n  file_name,\n  table_name,\n\
-          \  rows_loaded,\n  errors_seen,\n  first_error,\n  processing_timestamp,\n\
-          \  status\n)\nSELECT \n  'INGEST_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS'),\n\
-          \  '${file_name}',\n  '${table_name}',\n  COUNT(*),\n  0,\n  CASE \n   \
-          \ WHEN COUNT(*) = 0 THEN 'File skipped due to data quality issues'\n   \
-          \ ELSE NULL\n  END,\n  CURRENT_TIMESTAMP(),\n  CASE \n    WHEN COUNT(*)\
-          \ > 0 THEN 'SUCCESS'\n    ELSE 'FILE_SKIPPED'\n  END\nFROM ${table_name};\n"
+          RETURN_FAILED_ONLY = TRUE;\n\n-- Step 4: [COMPONENT-READY] Audit logging\
+          \ table creation (can be moved to create-table-v2)\nCREATE TABLE IF NOT\
+          \ EXISTS restaurant_processing_log (\n  pipeline_run_id VARCHAR(100),\n\
+          \  file_name VARCHAR(255),\n  table_name VARCHAR(255),\n  rows_loaded INTEGER,\n\
+          \  errors_seen INTEGER DEFAULT 0,\n  first_error VARCHAR(500),\n  processing_timestamp\
+          \ TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),\n  status VARCHAR(50)\n);\n\n--\
+          \ Step 5: [COMPONENT-READY] Processing results logging (can be moved to\
+          \ calculator + table-output)\nINSERT INTO restaurant_processing_log (\n\
+          \  pipeline_run_id,\n  file_name,\n  table_name,\n  rows_loaded,\n  errors_seen,\n\
+          \  first_error,\n  processing_timestamp,\n  status\n)\nSELECT \n  'INGEST_'\
+          \ || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD_HH24MISS'),\n  '${file_name}',\n\
+          \  '${table_name}',\n  COUNT(*),\n  0,\n  CASE \n    WHEN COUNT(*) = 0 THEN\
+          \ 'File skipped due to data quality issues'\n    ELSE NULL\n  END,\n  CURRENT_TIMESTAMP(),\n\
+          \  CASE \n    WHEN COUNT(*) > 0 THEN 'SUCCESS'\n    ELSE 'FILE_SKIPPED'\n\
+          \  END\nFROM ${table_name};\n"
       postProcessing:
-        updateOutputMessage: "✅ Data ingestion completed for ${file_name} → ${table_name}\
-          \ table created with schema validation and quality checks"
+        updateOutputMessage: "🔧 [COMPONENT-OPTIMIZED] Data ingestion: ${file_name}\
+          \ → ${table_name} (Enhanced for future component decomposition - Schema\
+          \ inference, data loading, and audit logging)"
         updateScalarVariables:
     Create Ingestion Log Table:
       type: "create-table-v2"
@@ -153,10 +159,10 @@ pipeline:
         setScalarVariables:
         setGridVariables:
       postProcessing:
+        updateScalarVariables:
         updateOutputMessage: "📊 Comprehensive business analytics completed - 7 KPI\
           \ tables generated: CLV, AOV, Menu Performance, Employee Performance, Customer\
           \ Retention, Seasonal Analysis, Master Dataset"
-        updateScalarVariables:
     Executive Dashboard Analytics:
       type: "run-transformation"
       parameters:
