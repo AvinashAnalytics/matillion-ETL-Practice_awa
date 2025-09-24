@@ -1,0 +1,140 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    Restaurant File Registry:
+      type: "fixed-flow"
+      parameters:
+        componentName: "Restaurant File Registry"
+        columns:
+        - - "file_name"
+          - "VARCHAR"
+          - "100"
+          - ""
+        - - "table_name"
+          - "VARCHAR"
+          - "100"
+          - ""
+        - - "file_type"
+          - "VARCHAR"
+          - "50"
+          - ""
+        - - "processing_priority"
+          - "VARCHAR"
+          - "10"
+          - ""
+        - - "expected_row_min"
+          - "VARCHAR"
+          - "10"
+          - ""
+        - - "expected_row_max"
+          - "VARCHAR"
+          - "10"
+          - ""
+        - - "business_criticality"
+          - "VARCHAR"
+          - "20"
+          - ""
+        values:
+        - - "rest_menus.csv"
+          - "REST_MENUS"
+          - "menu_data"
+          - "1"
+          - "50"
+          - "2000"
+          - "HIGH"
+        - - "rest_customers.csv"
+          - "REST_CUSTOMERS"
+          - "customer_data"
+          - "2"
+          - "100"
+          - "10000"
+          - "CRITICAL"
+        - - "rest_employees.csv"
+          - "REST_EMPLOYEES"
+          - "employee_data"
+          - "3"
+          - "10"
+          - "500"
+          - "HIGH"
+        - - "rest_orders.csv"
+          - "REST_ORDER"
+          - "transaction_data"
+          - "4"
+          - "500"
+          - "100000"
+          - "CRITICAL"
+      postProcessing:
+        updateOutputMessage: "📋 File registry configuration: Defining 4 data source\
+          \ mappings with processing priorities, row count thresholds, and business\
+          \ criticality classifications for intelligent ingestion"
+        updateScalarVariables:
+    File Registry Output:
+      type: "rewrite-table"
+      sources:
+      - "Restaurant File Registry"
+      parameters:
+        componentName: "File Registry Output"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "file_list"
+        orderBy:
+        - - "processing_priority"
+          - "ASCENDING"
+      postProcessing:
+        updateOutputMessage: "📋 File registry initialized with processing priorities\
+          \ and data quality thresholds - 4 restaurant data sources configured for\
+          \ automated ingestion"
+        updateScalarVariables:
+design:
+  components:
+    Restaurant File Registry:
+      position:
+        x: -110
+        "y": 10
+      tempMetlId: 1
+    File Registry Output:
+      position:
+        x: 300
+        "y": 10
+      tempMetlId: 2
+  notes:
+    "1":
+      position:
+        x: -320
+        "y": -360
+      size:
+        height: 460
+        width: 400
+      theme: "light-blue"
+      content: |
+        ### **📋 File Registry Control**
+
+        **Purpose:** Master configuration for data ingestion
+
+        **Function:**
+        - Maps CSV filenames to target table names
+        - Defines data source categories (menu, transaction, customer, employee)
+        - Controls which files get processed by iterator
+
+        **Scalability:** Add new files here to auto-include in processing
+
+        **Error Prevention:**
+        - Fixed schema ensures consistent mapping
+        - Validates file naming conventions
+        - Provides type categorization for validation
+    "2":
+      position:
+        x: 160
+        "y": -360
+      size:
+        height: 455
+        width: 420
+      theme: "green"
+      content: "### **📤 Registry Output Table**\n\n**Creates:** `file_list` control\
+        \ table\n\n**Columns:**\n- `file_name`: Source CSV filename\n- `table_name`:\
+        \ Target Snowflake table name  \n- `file_type`: Data category classification\n\
+        \n**Usage:** Iterator reads this table to process each file dynamically\n\n\
+        **Quality Assurance:**\n- Ordered by file_type for processing consistency\n\
+        - Success message confirms table creation\n- Ready for table-iterator consumption\n"

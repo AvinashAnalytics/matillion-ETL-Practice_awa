@@ -1,0 +1,312 @@
+type: "transformation"
+version: "1.0"
+pipeline:
+  components:
+    Customer Lifetime Value Data:
+      type: "table-input"
+      parameters:
+        componentName: "Customer Lifetime Value Data"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "CLV"
+        columnNames:
+        - "customer_id"
+        - "customer_name"
+        - "total_spent"
+      postProcessing:
+        updateOutputMessage: "💰 Loading Customer Lifetime Value analytics: Extracting\
+          \ top customer segments and spending patterns for executive revenue strategy"
+        updateScalarVariables:
+    Average Order Value Data:
+      type: "table-input"
+      parameters:
+        componentName: "Average Order Value Data"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "AOV"
+        columnNames:
+        - "avg_order_value"
+      postProcessing:
+        updateOutputMessage: "📈 Loading Average Order Value metrics: Retrieving global\
+          \ transaction benchmarks for executive performance monitoring"
+        updateScalarVariables:
+    Top Selling Items Data:
+      type: "table-input"
+      parameters:
+        componentName: "Top Selling Items Data"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "TOP_SELLING"
+        columnNames:
+        - "item_name"
+        - "category"
+        - "total_quantity_sold"
+        - "total_revenue"
+      postProcessing:
+        updateOutputMessage: "🍔 Loading menu performance data: Extracting top-selling\
+          \ items and category revenue for strategic product planning"
+        updateScalarVariables:
+    Data Quality Status:
+      type: "table-input"
+      parameters:
+        componentName: "Data Quality Status"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "DATA_QUALITY_REPORT"
+        columnNames:
+        - "data_quality_flag"
+        - "count_order_id"
+      postProcessing:
+        updateOutputMessage: "🔍 Loading data quality metrics: Retrieving validation\
+          \ results for executive data governance reporting"
+        updateScalarVariables:
+    Executive KPI Summary:
+      type: "calculator"
+      sources:
+      - "Average Order Value Data"
+      parameters:
+        componentName: "Executive KPI Summary"
+        includeInputColumns: "Yes"
+        calculations:
+        - - "'Restaurant Performance Dashboard'"
+          - "dashboard_title"
+        - - "CURRENT_DATE()"
+          - "report_date"
+        - - "CASE \n  WHEN \"avg_order_value\" IS NULL THEN 'Data Error: AOV Missing'\n\
+            \  WHEN \"avg_order_value\" <= 0 THEN 'Data Issue: Invalid AOV'\n  ELSE\
+            \ CONCAT('AOV: $', ROUND(\"avg_order_value\", 2))\nEND\n"
+          - "aov_status"
+        - - "TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYY-MM-DD HH24:MI:SS')"
+          - "last_updated"
+        - - "CASE\n  WHEN \"avg_order_value\" > 100 THEN 'EXCELLENT'\n  WHEN \"avg_order_value\"\
+            \ > 75 THEN 'GOOD' \n  WHEN \"avg_order_value\" > 50 THEN 'AVERAGE'\n\
+            \  ELSE 'NEEDS_IMPROVEMENT'\nEND\n"
+          - "performance_rating"
+    Customer Lifetime Value Summary:
+      type: "aggregate"
+      sources:
+      - "Customer Lifetime Value Data"
+      parameters:
+        componentName: "Customer Lifetime Value Summary"
+        groupings:
+        aggregations:
+        - - "total_spent"
+          - "Sum"
+        - - "customer_id"
+          - "Count"
+        - - "total_spent"
+          - "Average"
+        - - "total_spent"
+          - "Max"
+        groupingType: "Group By"
+    Category Performance Summary:
+      type: "aggregate"
+      sources:
+      - "Top Selling Items Data"
+      parameters:
+        componentName: "Category Performance Summary"
+        groupings:
+        - "category"
+        aggregations:
+        - - "total_revenue"
+          - "Sum"
+        - - "total_quantity_sold"
+          - "Sum"
+        - - "item_name"
+          - "Count"
+        groupingType: "Group By"
+    Executive Summary Output:
+      type: "rewrite-table"
+      sources:
+      - "Executive KPI Summary"
+      parameters:
+        componentName: "Executive Summary Output"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "EXEC_SUMMARY"
+        orderBy:
+      postProcessing:
+        updateOutputMessage: "📊 Executive summary dashboard ready - Real-time KPIs\
+          \ operational"
+        updateScalarVariables:
+    Customer Lifetime Value Data Output:
+      type: "rewrite-table"
+      sources:
+      - "Customer Lifetime Value Summary"
+      parameters:
+        componentName: "Customer Lifetime Value Data Output"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "EXEC_CLV_DATA"
+        orderBy:
+      postProcessing:
+        updateOutputMessage: "💰 Customer Lifetime Value executive summary ready"
+        updateScalarVariables:
+    Category Dashboard Output:
+      type: "rewrite-table"
+      sources:
+      - "Category Performance Summary"
+      parameters:
+        componentName: "Category Dashboard Output"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "EXEC_CATEGORY_DASHBOARD"
+        orderBy:
+        - - "sum_total_revenue"
+          - "DESCENDING"
+      postProcessing:
+        updateOutputMessage: "📈 Category performance dashboard ready - Strategic\
+          \ insights available"
+        updateScalarVariables:
+    Executive Quality Report:
+      type: "calculator"
+      sources:
+      - "Data Quality Status"
+      parameters:
+        componentName: "Executive Quality Report"
+        includeInputColumns: "Yes"
+        calculations:
+        - - "'Data Quality Executive Summary'"
+          - "report_title"
+        - - "CURRENT_TIMESTAMP()"
+          - "generated_timestamp"
+        - - |
+            CASE
+              WHEN "count_order_id" > 10000 THEN 'HIGH_VOLUME'
+              WHEN "count_order_id" > 1000 THEN 'MEDIUM_VOLUME'
+              ELSE 'LOW_VOLUME'
+            END
+          - "volume_classification"
+    Executive Quality Dashboard:
+      type: "rewrite-table"
+      sources:
+      - "Executive Quality Report"
+      parameters:
+        componentName: "Executive Quality Dashboard"
+        warehouse: "[Environment Default]"
+        database: "[Environment Default]"
+        schema: "[Environment Default]"
+        targetTable: "EXEC_QUALITY_DASHBOARD"
+        orderBy:
+      postProcessing:
+        updateOutputMessage: "🔍 Executive quality dashboard ready - Data governance\
+          \ metrics available for leadership"
+        updateScalarVariables:
+design:
+  components:
+    Customer Lifetime Value Data:
+      position:
+        x: 0
+        "y": 0
+      tempMetlId: 1
+    Average Order Value Data:
+      position:
+        x: 0
+        "y": 100
+      tempMetlId: 2
+    Top Selling Items Data:
+      position:
+        x: 0
+        "y": 200
+      tempMetlId: 3
+    Data Quality Status:
+      position:
+        x: 0
+        "y": 300
+      tempMetlId: 4
+    Executive KPI Summary:
+      position:
+        x: 300
+        "y": 100
+      tempMetlId: 5
+    Customer Lifetime Value Summary:
+      position:
+        x: 300
+        "y": 0
+      tempMetlId: 6
+    Category Performance Summary:
+      position:
+        x: 300
+        "y": 200
+      tempMetlId: 7
+    Executive Summary Output:
+      position:
+        x: 600
+        "y": 100
+      tempMetlId: 8
+    Customer Lifetime Value Data Output:
+      position:
+        x: 600
+        "y": 0
+      tempMetlId: 9
+    Category Dashboard Output:
+      position:
+        x: 600
+        "y": 200
+      tempMetlId: 10
+    Executive Quality Report:
+      position:
+        x: 320
+        "y": 300
+      tempMetlId: 11
+    Executive Quality Dashboard:
+      position:
+        x: 600
+        "y": 300
+      tempMetlId: 12
+  notes:
+    "1":
+      position:
+        x: -331
+        "y": -50
+      size:
+        height: 430
+        width: 280
+      theme: "light-blue"
+      content: |
+        ### **📊 Analytics Data Sources**
+
+        **Executive Input Tables:**
+        - 💰 **CLV**: Customer lifetime value rankings
+        - 📈 **AOV**: Average order value metrics
+        - 🍽️ **TOP_SELLING**: Menu performance data
+
+        **Data Validation:**
+        - Ensures all analytics tables exist
+        - Validates data completeness
+        - Handles missing data gracefully
+    "2":
+      position:
+        x: 180
+        "y": -401
+      size:
+        height: 785
+        width: 280
+      theme: "light-green"
+      content: "### **🔬 Executive Processing**\n\n**Summary Calculations:**\n- Customer\
+        \ metrics aggregation\n- Category performance rankings  \n- KPI dashboard\
+        \ metadata\n\n**Error Handling:**\n- NULL value protection\n- Data quality\
+        \ indicators\n- Status validation checks\n"
+    "3":
+      position:
+        x: 690
+        "y": -50
+      size:
+        height: 455
+        width: 280
+      theme: "green"
+      content: |
+        ### **💼 C-Suite Dashboards**
+
+        **Executive Outputs:**
+        - 📋 **EXEC_SUMMARY**: KPI overview
+        - 💰 **EXEC_CLV_DATA**: Customer insights
+        - 📈 **EXEC_CATEGORY_DASHBOARD**: Performance rankings
+
+        **Business Value:**
+        - Real-time strategic metrics
+        - Data-driven decision support
+        - Executive presentation ready
